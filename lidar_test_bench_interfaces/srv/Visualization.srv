@@ -1,0 +1,4 @@
+Visualization viz_msg
+---
+bool success
+string message

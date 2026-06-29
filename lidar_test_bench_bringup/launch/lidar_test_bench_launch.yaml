@@ -1,0 +1,57 @@
+launch:
+- node:
+    pkg: lidar_test_bench
+    exec: lidar_controller
+    name: lidar_controller
+    output: log
+    param:
+    - from: $(find-pkg-share lidar_test_bench)/config/lidar_test_bench.yaml
+- include:
+    file: $(find-pkg-share lidar_test_bench_bringup)/launch/robot_description.launch.py
+- node:
+    pkg: lidar_transforms
+    exec: lidar_bench_tf_broadcaster
+    name: lidar_bench_tf_broadcaster
+    output: log
+- node:
+    pkg: lidar_reporting
+    exec: grafana_reporter_node
+    name: grafana_reporter_node
+    output: screen
+    param:
+    - from: $(find-pkg-share lidar_reporting)/config/config.yaml
+- node:
+    pkg: lidar_reporting
+    exec: visualizer_node
+    name: visualizer_node
+    output: log
+    param:
+    - from: $(find-pkg-share lidar_reporting)/config/config.yaml
+- node:
+    pkg: lidar_transforms
+    exec: lidar_baseline_node
+    name: lidar_baseline_node
+    output: log
+    param:
+    - from: $(find-pkg-share lidar_transforms)/config/lidar_frame.yaml
+# - node:
+#     pkg: arduino_eth_bridge
+#     exec: arduino_eth_bridge_node
+#     name: arduino_eth_bridge_node
+#     output: screen
+#     param:
+#     - from: $(find-pkg-share arduino_eth_bridge)/config/arduino_eth_bridge.yaml
+# - include:
+#     file: $(find-pkg-share bag_recorder)/launch/bag_recorder_launch.yaml
+#     arg:
+#     - name: bags_dest
+#       value: /workspaces/polymath_workspace/Pole_Tests
+# - node:
+#     pkg: lidar_automation_manager
+#     exec: automation_manager
+#     name: lidar_automation_manager
+#     output: screen
+#     param:
+#     - from: $(find-pkg-share lidar_automation_manager)/config/automation_manager.yaml
+- include:
+    file: $(find-pkg-share foxglove_bridge)/launch/foxglove_bridge_launch.xml

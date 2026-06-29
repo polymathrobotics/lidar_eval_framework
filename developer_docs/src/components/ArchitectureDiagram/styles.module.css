@@ -1,0 +1,348 @@
+/*
+ * ArchitectureDiagram — hand-built recreation of the LiDAR test bench
+ * system block diagram. Pure CSS layout (grid + flex), color-matched to the
+ * original figure. Self-contained background so it reads in light & dark mode.
+ */
+
+.diagram {
+  --c-setup-band: #e3b352;
+  --c-setup-head: #cf952f;
+  --c-tools: #ece7f6;
+  --c-tools-border: #b6a8dd;
+  --c-config: #f7e3b8;
+  --c-config-border: #d9a441;
+  --c-runtime-band: #cfe5c2;
+  --c-runtime-head: #6fae5a;
+  --c-node: #e3f1da;
+  --c-node-border: #7fb069;
+  --c-grey-band: #cfcfcf;
+  --c-grey-head: #9a9a9a;
+  --c-internal: #dcdcdc;
+  --c-internal-border: #9a9a9a;
+  --c-output-band: #f6cd92;
+  --c-output-head: #e8a33d;
+  --c-storage: #fbe6cb;
+  --c-storage-border: #e8a33d;
+  --c-hw: #5f5f5f;
+  --c-hw-border: #3f3f3f;
+  --c-hw-pink: #ecd2d2;
+  --c-ink: #20242b;
+  --c-line: #555;
+
+  background: #ffffff;
+  color: var(--c-ink);
+  border: 1px solid #d0d0d0;
+  border-radius: 10px;
+  padding: 18px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12.5px;
+  line-height: 1.3;
+  overflow-x: auto;
+}
+
+.diagram * {
+  box-sizing: border-box;
+}
+
+/* ---- generic band (a numbered horizontal section) ---- */
+.band {
+  border-radius: 8px;
+  padding: 8px 10px 10px;
+  margin-bottom: 14px;
+}
+
+.bandTitle {
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+  text-align: center;
+  color: #1c1c1c;
+}
+
+.setupBand {
+  background: var(--c-setup-band);
+}
+.runtimeBand {
+  background: var(--c-runtime-band);
+}
+.greyBand {
+  background: var(--c-grey-band);
+}
+.outputBand {
+  background: var(--c-output-band);
+}
+
+/* ---- group (a titled inner container) ---- */
+.group {
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 6px;
+  padding: 7px 8px;
+}
+
+.groupTitle {
+  font-weight: 700;
+  font-size: 11px;
+  margin: 0 0 6px;
+  text-align: center;
+  color: #2a2a2a;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.row > * {
+  flex: 1 1 0;
+  min-width: 130px;
+}
+
+/* ---- box (a node / artifact / tool) ---- */
+.box {
+  border: 1.5px solid #888;
+  border-radius: 6px;
+  padding: 6px 8px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: 100%;
+}
+
+.boxTitle {
+  font-weight: 700;
+  font-size: 11.5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.boxSub {
+  font-size: 10.5px;
+  color: #444;
+}
+
+.boxNote {
+  font-size: 10px;
+  color: #555;
+  margin-top: 2px;
+}
+
+.icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* color variants for boxes */
+.tools {
+  background: var(--c-tools);
+  border-color: var(--c-tools-border);
+}
+.config {
+  background: var(--c-config);
+  border-color: var(--c-config-border);
+}
+.node {
+  background: var(--c-node);
+  border-color: var(--c-node-border);
+}
+.internal {
+  background: var(--c-internal);
+  border-color: var(--c-internal-border);
+}
+.storage {
+  background: var(--c-storage);
+  border-color: var(--c-storage-border);
+}
+.hwBox {
+  background: var(--c-hw-pink);
+  border-color: #b48a8a;
+}
+
+/* ---- mid section: 3 columns (triggers | pipeline | hardware) ---- */
+.mid {
+  display: grid;
+  grid-template-columns: 215px 1fr 215px;
+  gap: 12px;
+  align-items: start;
+}
+
+@media (max-width: 996px) {
+  .mid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* trigger blocks */
+.trigger {
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.triggerGrey {
+  background: var(--c-grey-band);
+  border: 1.5px dashed #7a7a7a;
+}
+
+.triggerGreen {
+  background: var(--c-runtime-band);
+  border: 1.5px solid var(--c-runtime-head);
+}
+
+.triggerHead {
+  font-weight: 800;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+
+.triggerSub {
+  font-size: 10.5px;
+  color: #333;
+  margin: 0 0 7px;
+}
+
+.ol {
+  margin: 0 0 8px;
+  padding-left: 16px;
+  font-size: 10.5px;
+}
+.ol li {
+  margin-bottom: 2px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+/* hardware layer */
+.hwLayer {
+  background: var(--c-hw);
+  color: #f2f2f2;
+  border: 1.5px solid var(--c-hw-border);
+  border-radius: 8px;
+  padding: 10px;
+  height: 100%;
+}
+
+.hwLayer .bandTitle {
+  color: #fff;
+  text-align: left;
+}
+
+.hwItem {
+  background: #6f6f6f;
+  border: 1px solid #828282;
+  border-radius: 6px;
+  padding: 7px 8px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  text-align: center;
+}
+
+/* ---- service / flow annotations ---- */
+.svc {
+  font-size: 10px;
+  font-style: italic;
+  color: #333;
+  text-align: center;
+  margin: 4px 0;
+}
+
+.arrowDown {
+  text-align: center;
+  font-size: 16px;
+  color: var(--c-line);
+  line-height: 1;
+  margin: 2px 0;
+}
+
+.flowLabel {
+  display: inline-block;
+  background: #fff;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 9.5px;
+  font-style: italic;
+  color: #333;
+}
+
+.flowRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 6px 2px;
+  flex-wrap: wrap;
+}
+
+.interfaces {
+  background: #d9e8ff;
+  border: 1.5px solid #6f9bd1;
+  border-radius: 6px;
+  padding: 7px 9px;
+}
+.interfaces .groupTitle {
+  margin-bottom: 4px;
+}
+.interfaces ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 10.5px;
+  columns: 2;
+}
+
+/* ---- legend ---- */
+.legend {
+  margin-top: 16px;
+  border-top: 1px solid #ddd;
+  padding-top: 10px;
+}
+.legendTitle {
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 7px;
+}
+.legendRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 22px;
+}
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+}
+.swatch {
+  width: 16px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid #888;
+  flex: none;
+}
+.lineSample {
+  width: 26px;
+  border-top: 2px solid #444;
+  flex: none;
+}
+.lineDotted {
+  border-top-style: dotted;
+}
+.lineDashed {
+  border-top-style: dashed;
+}

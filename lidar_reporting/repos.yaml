@@ -1,0 +1,5 @@
+repositories:
+  polymath_core:
+    type: git
+    url: git@gitlab.com:polymathrobotics/polymath_core.git
+    version: main

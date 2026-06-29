@@ -1,0 +1,69 @@
+IntensityUniformity:
+  type: gauge
+  title: Intensity Uniformity
+  plane_enabled: false
+
+LocalRoughnessKNN:
+  type: gauge
+  title: Local Roughness (KNN)
+  plane_enabled: false
+
+NearestNeighbourSpacing:
+  type: gauge
+  title: Nearest Neighbour Spacing
+  plane_enabled: false
+
+NoiseRegionContamination:
+  type: gauge
+  title: Noise Region Contamination
+  plane_enabled: false
+
+PointYieldPerZone:
+  type: gauge
+  title: Point Yield Per Zone
+  plane_enabled: false
+
+RangeDistributionHealth:
+  type: gauge
+  title: Range Distribution Health
+  plane_enabled: false
+
+RangePrecision:
+  type: gauge
+  title: Range Precision
+  plane_enabled: false
+
+SpatialDropout:
+  type: gauge
+  title: Spatial Dropout
+  plane_enabled: false
+
+AverageSpatialDropout:
+  type: gauge
+  title: Average Spatial Dropout
+  plane_enabled: false
+
+SurfaceFitResidual:
+  type: gauge
+  title: Surface Fit Residual
+  plane_enabled: true
+
+TemporalConsistency:
+  type: gauge
+  title: Temporal Consistency
+  plane_enabled: false
+
+ZoneIntensityMean:
+  type: gauge
+  title: Zone Intensity Mean
+  plane_enabled: false
+
+ZoneSurfaceDepthError:
+  type: gauge
+  title: Zone Surface Depth Error
+  plane_enabled: false
+
+lidar_test_runs_total:
+  type: counter
+  title: LiDAR Test Runs Total
+  plane_enabled: false

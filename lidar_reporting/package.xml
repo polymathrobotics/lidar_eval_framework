@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>lidar_reporting</name>
+  <version>0.0.0</version>
+  <description>ROS2 package used for lidar metrics reporting straight to grafana</description>
+  <maintainer email="polymath@polymathrobotics.com">Polymath Robotics Engineering</maintainer>
+  <license>Apache 2.0</license>
+
+  <depend>metrics_exporter</depend>
+  <depend>visualization_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>geometry_msgs</depend>
+  <depend>replay_testing</depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
