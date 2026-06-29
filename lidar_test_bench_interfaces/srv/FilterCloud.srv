@@ -1,0 +1,7 @@
+sensor_msgs/PointCloud2 cloud
+---
+string[] zone_names
+sensor_msgs/PointCloud2[] spatial_clouds_per_zone
+sensor_msgs/PointCloud2[] projective_clouds_per_zone
+bool success
+string message

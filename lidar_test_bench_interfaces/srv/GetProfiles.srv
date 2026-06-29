@@ -1,0 +1,5 @@
+# Request baseline profiles computed from TF + ROI config
+---
+string profiles_json
+bool success
+string message
