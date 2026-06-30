@@ -31,8 +31,6 @@ class LidarController(Node):
         self.declare_parameter('lidar_server_topic', '/start_evaluation')
         self.declare_parameter('test_results_dir', "/workspaces/polymath_workspace/src/lidar_testbench/lidar_test_bench_results")
         self.declare_parameter('lidar', "E1R")
-        self.declare_parameter('notion_database_id', '')
-        self.declare_parameter('notion_token', '')
         self.declare_parameter('metrics_results_dir', '/workspaces/polymath_workspace/metrics_results')
         self.declare_parameter('environment', '')
         self.declare_parameter('horizontal_resolution_deg', 0.0)

@@ -508,12 +508,16 @@ class GoogleServicesHandler:
             print(f"⚠️  Could not set public-link permission on {file_id}: {e}")
 
     def push_visualization_to_case(
-        self, env_name: str, lidar_name: str, case_name: str, rows: list[list[str]]
+        self, env_name: str, lidar_name: str, case_name: str, blocks: list[list[str]]
     ) -> None:
         """Adds (or clears + reuses) a 'Visualization' tab inside the case's existing spreadsheet
         and writes the supplied rows into it. Mirrors the Notion sub-page approach: viz data lives
         alongside the metrics for the same case rather than in a separate file.
         """
+        rows = self._blocks_to_rows(blocks)
+        if not rows:
+            return
+
         spreadsheet_id = self._case_spreadsheet_ids.get((env_name, lidar_name, case_name))
 
         if not spreadsheet_id:
@@ -563,25 +567,48 @@ class GoogleServicesHandler:
         print(f"🚀 Visualization pushed to '{viz_title}' tab of case '{case_name}'.")
 
 
-# def main():
-#     handler = GoogleServicesHandler()
-#     handler.authenticate_via_1password()
 
-#     env_folder_id = handler.create_environment_folder("Test Environment A")
-#     lidar_folder_id = handler.create_lidar_folder("Test Environment A", "Hummingbird LiDAR")
+    def sync(
+        self,
+        test_data: dict[str, dict[str, dict[str, Any]]],
+        rosbags: dict[str, dict[str, list]] | None = None,
+    ) -> None:
 
-#     sheet_url = handler.create_folder_per_case(
-#         env_name="Test Environment A",
-#         lidar_name="Hummingbird LiDAR",
-#         case_name="Case 1: Clear Daylight",
-#         metrics={
-#             "Average Distance Error (m)": 0.15,
-#             "Point Density (points/m²)": 1200,
-#             "Detection Rate (%)": 98.5
-#         }
-#     )
-#     print(f"\nCreated Google Sheet URL: {sheet_url}")
+        rosbags = rosbags or {}
+        for env_name, lidar_data in test_data.items():
+            self.create_environment_folder(env_name)
+            summary_cases: list[tuple[str, str, dict[str, Any]]] = []
+            for lidar_name, case_data in lidar_data.items():
+                self.create_lidar_folder(env_name, lidar_name)
+                for case_path, metrics in case_data.items():
+                    flat_metrics = self._flatten_metrics(metrics)
+                    if not flat_metrics:
+                        continue
+                    merged = {**self._lidar_metadata, **flat_metrics}
+                    # Bags are keyed by (lidar, case) only — the bag root is a single
+                    # env, so there's no env level to match. Missing → no bag uploaded.
+                    case_bags = rosbags.get(lidar_name, {}).get(case_path, [])
+                    self.create_folder_per_case(
+                        env_name, lidar_name, case_path, merged, case_bags
+                    )
+                    summary_cases.append((lidar_name, case_path, merged))
+            # One summary sheet per env (one row per case) so the dashboard loads the whole
+            # environment in a single read instead of one read per case.
+            self.write_environment_summary(env_name, summary_cases)
 
 
-# if __name__ == "__main__":
-#     main()
+    @staticmethod
+    def _blocks_to_rows(blocks: list) -> list[list[str]]:
+        rows: list[list[str]] = []
+        for block in blocks:
+            btype = block.get('type')
+            if not btype:
+                continue
+            rich_text = block.get(btype, {}).get('rich_text', [])
+            if not rich_text:
+                continue
+            text = rich_text[0].get('text', {}).get('content', '')
+            if not text:
+                continue
+            rows.append([text])
+        return rows

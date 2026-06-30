@@ -7,6 +7,7 @@ grafana_reporter_node:
     lidar_horizontal_fov_deg: 360.0
     lidar_vertical_fov_deg: 95.0
     bag_directory: /workspaces/polymath_workspace/Pole_Tests
+    database_handler: Google
 visualizer_node:
   ros__parameters:
     metrics_results_dir: /workspaces/polymath_workspace/metrics_results

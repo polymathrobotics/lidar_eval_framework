@@ -1,7 +1,11 @@
 # Copyright (c) 2025-present Polymath Robotics, Inc. All rights reserved
 # Proprietary. Any unauthorized copying, distribution, or modification of this software is strictly prohibited.
 
+import importlib
+from pathlib import Path
 from typing import Any
+import yaml
+
 
 from lidar_reporting.tools.database_backends.google_services_handler import GoogleServicesHandler
 
@@ -9,9 +13,10 @@ from lidar_reporting.tools.database_backends.google_services_handler import Goog
 class LidarDatabaseHandler:
 
     def __init__(self, lidar_metadata: dict[str, Any] | None = None):
-        self._database_handler = GoogleServicesHandler()
+        self._database_handler = None
         self.authenticated = False
         self._lidar_metadata = lidar_metadata or {}
+        self.configure_backend("database_registry.yaml")
 
     @property
     def available(self) -> bool:
@@ -25,8 +30,26 @@ class LidarDatabaseHandler:
             self.authenticated = False
             raise
 
+    def configure_backend(self, filename: str) -> None:
+        config_path = Path(__file__).parent / filename
 
-    # make this a wrapper to a lower level sync function
+        with open(config_path, 'r') as file:
+            config_data = yaml.safe_load(file)
+
+        registry = config_data.get("database_registry", [])
+
+        for backend in registry:
+            if backend.get("enabled") is True:
+                module_name = backend.get("executable")
+                class_name = backend.get("class")
+
+                module_path = f"lidar_reporting.tools.database_backends.{module_name}"
+                module = importlib.import_module(module_path)
+
+                backend_class = getattr(module, class_name)
+                self._database_handler = backend_class()
+                break
+
 
     def sync(
         self,
@@ -37,28 +60,8 @@ class LidarDatabaseHandler:
         if not self.available:
             return
 
-        rosbags = rosbags or {}
-        for env_name, lidar_data in test_data.items():
-            self._database_handler.create_environment_folder(env_name)
-            summary_cases: list[tuple[str, str, dict[str, Any]]] = []
-            for lidar_name, case_data in lidar_data.items():
-                self._database_handler.create_lidar_folder(env_name, lidar_name)
-                for case_path, metrics in case_data.items():
-                    flat_metrics = self._flatten_metrics(metrics)
-                    if not flat_metrics:
-                        continue
-                    merged = {**self._lidar_metadata, **flat_metrics}
-                    # Bags are keyed by (lidar, case) only — the bag root is a single
-                    # env, so there's no env level to match. Missing → no bag uploaded.
-                    case_bags = rosbags.get(lidar_name, {}).get(case_path, [])
-                    self._database_handler.create_folder_per_case(
-                        env_name, lidar_name, case_path, merged, case_bags
-                    )
-                    summary_cases.append((lidar_name, case_path, merged))
-            # One summary sheet per env (one row per case) so the dashboard loads the whole
-            # environment in a single read instead of one read per case.
-            self._database_handler.write_environment_summary(env_name, summary_cases)
 
+        self._database_handler.sync(test_data, rosbags)
 
     # make this a wrapper as well
 
@@ -67,15 +70,9 @@ class LidarDatabaseHandler:
         if not self.available:
             return
 
-        # include below logic in the push_visualization_to_case method here
+        # include below logic in the push_visualization_to_case method her
 
-        rows = self._blocks_to_rows(blocks)
-        if not rows:
-            return
-
-        ###
-
-        self._database_handler.push_visualization_to_case(env, lidar, case, rows)
+        self._database_handler.push_visualization_to_case(env, lidar, case, blocks)
 
     def _ensure_authenticated(self) -> None:
         if self.authenticated:
@@ -84,22 +81,6 @@ class LidarDatabaseHandler:
             self.authenticate()
         except Exception:
             self.authenticated = False
-
-    @staticmethod
-    def _blocks_to_rows(blocks: list) -> list[list[str]]:
-        rows: list[list[str]] = []
-        for block in blocks:
-            btype = block.get('type')
-            if not btype:
-                continue
-            rich_text = block.get(btype, {}).get('rich_text', [])
-            if not rich_text:
-                continue
-            text = rich_text[0].get('text', {}).get('content', '')
-            if not text:
-                continue
-            rows.append([text])
-        return rows
 
     @classmethod
     def _flatten_metrics(cls, metrics: dict[str, Any]) -> dict[str, Any]:

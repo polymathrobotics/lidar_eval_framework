@@ -219,8 +219,6 @@ class GrafanaReporterNode(Node):
             result[f'{zone}_plane_bounds_z_min'] = float(corners_disp[:, 2].min())
             result[f'{zone}_plane_bounds_z_max'] = float(corners_disp[:, 2].max())
 
-        # Expected plane: translate into the same lidar-relative frame as the
-        # fitted plane (translation only, matching the handling above).
         expected_zones = [k.replace('_expected_x', '') for k in viz if k.endswith('_expected_x')]
         for zone in expected_zones:
             for axis, offset in (('x', t[0]), ('y_min', t[1]), ('y_max', t[1]),
@@ -237,9 +235,7 @@ class GrafanaReporterNode(Node):
         R, t = self._get_lidar_pose()
         case_data = self.test_data.get(env, {}).get(lidar, {}).get(case, {})
         blocks = []
-        # Report nests zone -> metric -> {..., visualization: {...}}. Pull each
-        # metric's visualization sub-dict and zone-prefix its (un-prefixed) keys so
-        # the transform and the viewer can attribute them to the right zone.
+
         for zone, metrics in case_data.items():
             if not isinstance(metrics, dict):
                 continue

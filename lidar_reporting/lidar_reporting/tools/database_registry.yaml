@@ -1,0 +1,8 @@
+# Welcome to the database registry where you can hook different backend executables by name
+database_registry:
+  - database_backend: Google
+    executable: google_api_handler
+    enabled: true
+  - database_backend: Pending
+    executable:
+    enabled: false
