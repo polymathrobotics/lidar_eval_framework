@@ -4,8 +4,6 @@
 import base64
 from pathlib import Path
 
-from ament_index_python.packages import get_package_share_directory
-from polymath_metrics import MetricsInterface
 import numpy as np
 import rclpy
 from rclpy.node import Node
@@ -14,7 +12,6 @@ from rclpy.duration import Duration
 from std_srvs.srv import Trigger
 from lidar_test_bench_interfaces.srv import Visualization
 from tf2_ros import Buffer, TransformListener
-import yaml
 
 from lidar_reporting.tools.lidar_database_handler import LidarDatabaseHandler
 from lidar_reporting.tools.data_reader import DataReader
@@ -59,12 +56,6 @@ class GrafanaReporterNode(Node):
         self._tf_buffer = Buffer()
         self._tf_listener = TransformListener(self._tf_buffer, self)
 
-        self.metrics = MetricsInterface('lidar_reporting', Path('/tmp/prom_targets.d'))
-        self.get_logger().info(f'Metrics exposed at localhost:{self.metrics.listen_port}')
-        self.get_logger().info(f'Scrape target written to: {self.metrics.scrape_target_file}')
-
-        self.metric_families = self._load_metric_families()
-
         self.create_service(Trigger, '/report_metrics', self._on_report_trigger)
         self.create_service(Visualization, '/visualization', self._on_visualization_request)
         self.get_logger().info('Report trigger service ready on: /report_metrics')
@@ -72,7 +63,6 @@ class GrafanaReporterNode(Node):
         self.test_data = self.data_reader.load()
         if self.test_data:
             self._current_location = self._first_location()
-            self._report_metrics()
             self.get_logger().info(f'Auto-loaded {self._count_cases()} existing test case(s) on startup')
 
     def _first_location(self) -> tuple[str, str, str] | None:
@@ -85,37 +75,11 @@ class GrafanaReporterNode(Node):
     def _count_cases(self) -> int:
         return sum(len(case_data) for lidar_data in self.test_data.values() for case_data in lidar_data.values())
 
-    def _load_metric_families(self) -> dict:
-        share_dir = get_package_share_directory('lidar_reporting')
-        registry_path = Path(share_dir) / 'config' / 'metrics_registry.yaml'
-
-        with open(registry_path, 'r') as f:
-            registry = yaml.safe_load(f)
-
-        families = {}
-        for metric_name, metric_cfg in registry.items():
-            if isinstance(metric_cfg, dict):
-                metric_type = metric_cfg.get('type', '')
-                title = metric_cfg.get('title', metric_name)
-            else:
-                metric_type = metric_cfg
-                title = metric_name
-            if metric_type == 'gauge':
-                families[metric_name] = self.metrics.create_gauge_family(metric_name, title)
-            elif metric_type == 'counter':
-                families[metric_name] = self.metrics.create_counter_family(metric_name, title)
-            else:
-                self.get_logger().warn(f'Unknown metric type "{metric_type}" for "{metric_name}", skipping')
-
-        self.get_logger().info(f'Registered {len(families)} metric families from metrics_registry.yaml')
-        return families
-
     def _on_report_trigger(self, _request, response):
         self.test_data = self.data_reader.load()
         current_count = self._count_cases()
         self._current_location = self.data_reader.most_recent_case()
-        self.get_logger().info(f'Loaded {current_count} test case(s), reporting to Prometheus')
-        self._report_metrics()
+        self.get_logger().info(f'Loaded {current_count} test case(s)')
 
         if current_count > self._prev_case_count:
             # New case just written — snapshot its viz data for later push
@@ -365,25 +329,6 @@ class GrafanaReporterNode(Node):
             'object': 'block', 'type': 'bulleted_list_item',
             'bulleted_list_item': {'rich_text': [{'type': 'text', 'text': {'content': text}}]},
         }
-
-    def _report_metrics(self) -> None:
-        for env, lidar_data in self.test_data.items():
-            for lidar, case_data in lidar_data.items():
-                for case, metrics_data in case_data.items():
-                    if not isinstance(metrics_data, dict):
-                        continue
-                    for metric_name, values in metrics_data.items():
-                        family = self.metric_families.get(metric_name)
-                        if family is None:
-                            self.get_logger().warn(f'No family registered for metric "{metric_name}", skipping')
-                            continue
-                        if isinstance(values, dict):
-                            for stat_key, stat_val in values.items():
-                                if stat_key == 'visualization':
-                                    continue
-                                family.add({'env': env, 'lidar': lidar, 'case': case, 'stat': stat_key}).set(float(stat_val))
-                        elif isinstance(values, (int, float)):
-                            family.add({'env': env, 'lidar': lidar, 'case': case}).set(float(values))
 
 
 def main(args=None):

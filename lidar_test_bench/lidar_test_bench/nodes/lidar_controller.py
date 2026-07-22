@@ -14,7 +14,6 @@ import traceback
 
 
 from lidar_metrics.engine import LidarMetricsEngine
-from lidar_reporting.tools.database_handler import DatabaseHandler
 from lidar_test_bench.tools.lidar_processor import LidarProcessor
 from lidar_test_bench.tools.bag_runner import LidarBagPlayer
 from std_srvs.srv import Trigger
@@ -42,16 +41,10 @@ class LidarController(Node):
         self.lidar_server_topic = self.get_parameter("lidar_server_topic").value
         self.test_results_dir = self.get_parameter('test_results_dir').value
         self.lidar_type = self.get_parameter('lidar').value
-        notion_database_id = self.get_parameter('notion_database_id').value
-        notion_token = self.get_parameter('notion_token').value
         metrics_results_dir = Path(self.get_parameter('metrics_results_dir').value)
         environment = self.get_parameter('environment').value
         if environment:
             metrics_results_dir = metrics_results_dir / environment
-
-        self._db_handler = DatabaseHandler(notion_database_id, notion_token)
-        if not self._db_handler.available:
-            self.get_logger().warn('Notion credentials not set -- Notion sync disabled')
 
         # Initialize the separated logic
         self.processor = LidarProcessor()

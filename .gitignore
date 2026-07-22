@@ -1,5 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
 environment_configs/
 lidar_configs/
+results_locations/
 build/
 log/
 install/
+
+# Local Claude Code settings
+.claude/settings.local.json

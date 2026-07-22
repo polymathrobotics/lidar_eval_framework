@@ -1,0 +1,40 @@
+{
+  "name": "lidar-test-bench (jazzy)",
+
+  // Build from the Dockerfile in this folder.
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "target": "ros-jazzy",
+    "args": { "ROS_DISTRO": "jazzy" }
+  },
+
+  "workspaceFolder": "/lidar_test_bench",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/lidar_test_bench,type=bind,consistency=cached",
+
+  "runArgs": ["--net=host", "--ipc=host"],
+
+  // X11 forwarding so GUI apps (e.g. polysetup's Tkinter window) can display on
+  // the Linux host. Pass through the host DISPLAY and bind-mount the X socket.
+  // On the host, allow the container to connect once per session:
+  //   xhost +local:
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}"
+  },
+  "mounts": [
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind"
+  ],
+
+  // Updated to source Jazzy instead of Humble
+  "postCreateCommand": "grep -qxF 'source /opt/ros/jazzy/setup.bash' ~/.bashrc || echo 'source /opt/ros/jazzy/setup.bash' >> ~/.bashrc; grep -qF 'install/setup.bash' ~/.bashrc || echo '[ -f /lidar_test_bench/install/setup.bash ] && source /lidar_test_bench/install/setup.bash' >> ~/.bashrc",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-iot.vscode-ros",
+        "anthropic.claude-code"
+      ]
+    }
+  }
+}

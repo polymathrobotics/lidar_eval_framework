@@ -7,9 +7,9 @@ launch:
     param:
     - from: $(find-pkg-share lidar_test_bench)/config/lidar_test_bench.yaml
 - include:
-    file: $(find-pkg-share lidar_test_bench_bringup)/launch/robot_description.launch.py
+    file: $(find-pkg-share lidar_zones)/launch/robot_description.launch.py
 - node:
-    pkg: lidar_transforms
+    pkg: lidar_zones
     exec: lidar_bench_tf_broadcaster
     name: lidar_bench_tf_broadcaster
     output: log
@@ -45,7 +45,7 @@ launch:
 #     file: $(find-pkg-share bag_recorder)/launch/bag_recorder_launch.yaml
 #     arg:
 #     - name: bags_dest
-#       value: /workspaces/polymath_workspace/Pole_Tests
+#       value: CONFERENCE_ROOM_WHITE_WALL
 # - node:
 #     pkg: lidar_automation_manager
 #     exec: automation_manager

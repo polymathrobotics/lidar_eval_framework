@@ -7,7 +7,6 @@
   <maintainer email="polymath@polymathrobotics.com">Polymath Robotics Engineering</maintainer>
   <license>Apache 2.0</license>
 
-  <depend>metrics_exporter</depend>
   <depend>visualization_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>geometry_msgs</depend>

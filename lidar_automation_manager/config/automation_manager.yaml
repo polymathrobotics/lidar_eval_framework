@@ -1,40 +1,67 @@
 lidar_automation_manager:
   ros__parameters:
-    lidar: JT128
-    ros2_driver: hesai_ros_driver
-    driver_command: ros2 run hesai_ros_driver hesai_ros_driver_node --ros-args -p
-      config_path:=/workspaces/polymath_workspace/src/HesaiLidar_ROS_2.0/config/config.yaml
-    driver_config_file: /workspaces/polymath_workspace/src/HesaiLidar_ROS_2.0/config/config.yaml
+    lidar: LSLIDAR
+    ros2_driver: lslidar_driver
+    driver_command: ros2 run lslidar_driver lslidar_driver_node --ros-args --params-file
+      /workspaces/polymath_workspace/lslidar_config.yaml
+    driver_config_file: /workspaces/polymath_workspace/lslidar_config.yaml
     lidar_gui: ''
-    bag_recorder_directory: /workspaces/polymath_workspace/Pole_Tests
+    bag_recorder_directory: /lidar_test_bench/results_locations/rosbags/CONFERENCE_ROOM_WHITE_WALL
     bench_initiate_service: ~/lidar_test_bench_initiate
     start_evaluation_service: /start_evaluation
     start_bag_service: /session_recorder/start
     stop_bag_service: /session_recorder/stop
     servo_angle_topic: /servo_angle
     bag_recording_duration: 20
-    pointcloud_topic: /lidar_points
+    pointcloud_topic: /lslidar_point_cloud
     angles:
-    - 152.0
-    - 76.0
+    - 30.0
+    - 15.0
     - 0.0
-    - -76.0
-    - -152.0
+    - -15.0
+    - -30.0
     parameter_names:
-    - frame_frequency
-    - echo_mode_filter
-    frame_frequency:
+    - min_range
+    - max_range
+    - scan_start_angle
+    - scan_end_angle
+    min_range:
       type: double
-      default: 10.0
+      default: 0.15
       values:
+      - 0.15
+      - 0.5
+      - 1.0
+      path: /**.ros__parameters.min_range
+      description: Minimum range threshold in meters. Returns closer than this value
+        are filtered out to prevent self-occlusion from the sensor housing or mount.
+    max_range:
+      type: double
+      default: 50.0
+      values:
+      - 6.0
       - 10.0
-      - 20.0
-      path: lidar.0.driver.default_frame_frequency
-    echo_mode_filter:
+      - 50.0
+      path: /**.ros__parameters.max_range
+      description: Maximum range threshold in meters. Filters out distant returns;
+        at a 5 m target this brackets the cutoff from just-past-target to full range.
+    scan_start_angle:
       type: int
-      default: 0
+      default: -6000
       values:
-      - 0
-      - 1
-      - 2
-      path: lidar.0.driver.echo_mode_filter
+      - -6000
+      - -3000
+      - -1500
+      path: /**.ros__parameters.scan_start_angle
+      description: Start azimuth of the horizontal FOV window in 0.01 deg units (-6000
+        = -60 deg). Sweeps progressively narrow the left edge of the scanning sector.
+    scan_end_angle:
+      type: int
+      default: 6000
+      values:
+      - 6000
+      - 3000
+      - 1500
+      path: /**.ros__parameters.scan_end_angle
+      description: End azimuth of the horizontal FOV window in 0.01 deg units (6000
+        = 60 deg). Sweeps progressively narrow the right edge of the scanning sector.

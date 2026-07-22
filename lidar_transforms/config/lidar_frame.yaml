@@ -1,11 +1,11 @@
 lidar_bench_tf_broadcaster:
   ros__parameters:
-    lidar_frame: hesai_lidar
+    lidar_frame: laser_link
 lidar_baseline_node:
   ros__parameters:
-    lidar_frame: hesai_lidar
-    cloud_topic: /lidar_points
+    lidar_frame: laser_link
+    cloud_topic: /lslidar_point_cloud
     z_padding:
-      black_half_cylinder: 0.0
+      white_wall: 0.1
     y_padding:
-      black_half_cylinder: 0.0
+      white_wall: 0.101

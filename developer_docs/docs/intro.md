@@ -66,5 +66,5 @@ This section covers how to pull the repository, orchestrate your containerized e
 First, clone the repository and navigate into the project root:
 
 ```bash
-git clone https://github.com/your-org/lidar-eval-framework.git
+git clone https://github.com/polymathrobotics/lidar_eval_framework
 cd lidar-eval-framework

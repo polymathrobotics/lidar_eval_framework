@@ -1,10 +1,11 @@
 zones:
-- name: black_half_cylinder
-  frame: black_half_cylinder
-  type: cylindrical
+- name: white_wall
+  frame: white_wall
+  type: planar
   color: white
-  height: 0.127
-  radius: 0.04826
-  radius_padding: 0.01
-  height_padding: 0.02
-  outward_radius_padding: 0.01
+  width: 2.4638
+  z_bounds:
+  - 0.5588
+  - 1.5875
+  y_padding: 0.101
+  z_padding: 0.1

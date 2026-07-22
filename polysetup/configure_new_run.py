@@ -7,24 +7,24 @@ from pathlib import Path
 
 import yaml
 
-from lidar_eval_fixture.harness_builder_interface import HarnessBuilderInterface
+from lidar_zones.zones_gen.urdf_generator import URDFGenerator
 import polysetup_utils
 from polysetup_utils import PolysetupUtils
 
-
+h
 _REPO_ROOT = Path(__file__).parent.parent
 _LIDAR_CONFIGS_DIR = _REPO_ROOT / 'lidar_configs'
 _ENVIRONMENT_CONFIGS_DIR = _REPO_ROOT / 'environment_configs'
-_URDF_OUTPUT_PATH = _REPO_ROOT / 'lidar_transforms' / 'urdf' / 'lidar_bench.urdf'
+_URDF_OUTPUT_PATH = _REPO_ROOT / 'lidar_zones' / 'urdf' / 'lidar_bench.urdf'
 _LIDAR_TEST_BENCH_YAML = _REPO_ROOT / 'lidar_test_bench' / 'config' / 'lidar_test_bench.yaml'
 _LIDAR_FRAME_YAML = _REPO_ROOT / 'lidar_transforms' / 'config' / 'lidar_frame.yaml'
 _LIDAR_REPORTING_CONFIG_YAML = _REPO_ROOT / 'lidar_reporting' / 'config' / 'config.yaml'
 _ROI_YAML_PATH = _REPO_ROOT / 'lidar_transforms' / 'config' / 'roi.yaml'
-_COLOR_MAP_PATH = Path(__file__).parent.parent / 'lidar_eval_fixture' / 'config' / 'color_map.yaml'
+_COLOR_MAP_PATH = _REPO_ROOT / 'lidar_zones' / 'lidar_zones' / 'zones_gen' / 'config' / 'color_map.yaml'
 _LIDAR_AUTOMATION_MANAGER_YAML = _REPO_ROOT / 'lidar_automation_manager' / 'config' / 'automation_manager.yaml'
 _LIDAR_TEST_BENCH_BRINGUP_YAML = _REPO_ROOT / 'lidar_test_bench_bringup' / 'launch' / 'lidar_test_bench_launch.yaml'
-
-
+_METRICS_RESULTS_PATH_ = "/lidar_test_bench/results_locations/metrics_results"
+_BASE_DATA_PATH_ = "/lidar_test_bench/results_locations/rosbags"
 
 class ConfigureNewRun:
 
@@ -57,12 +57,12 @@ class ConfigureNewRun:
                 },
                 {
                     'include': {
-                        'file': '$(find-pkg-share lidar_test_bench_bringup)/launch/robot_description.launch.py',
+                        'file': '$(find-pkg-share lidar_zones)/launch/robot_description.launch.py',
                     }
                 },
                 {
                     'node': {
-                        'pkg': 'lidar_transforms',
+                        'pkg': 'lidar_zones',
                         'exec': 'lidar_bench_tf_broadcaster',
                         'name': 'lidar_bench_tf_broadcaster',
                         'output': 'log',
@@ -142,7 +142,7 @@ class ConfigureNewRun:
         print('Done.')
 
     def _build_urdf(self) -> None:
-        builder = HarnessBuilderInterface(
+        builder = URDFGenerator(
             environment_config_dict=self.environment_config,
             lidar_config_dict=self.lidar_config,
         )
@@ -158,7 +158,7 @@ class ConfigureNewRun:
         input_topic = self.lidar_params.get('point_cloud_topic')
         lidar_folder = self.lidar_params.get('folder')
         environment = self.environment_config.get('name', '')
-        test_results_dir = self.environment_config.get('bag_recorder_directory')
+        bag_recorder_directory = self.environment_config.get('bag_recorder_directory')
 
 
 
@@ -174,7 +174,8 @@ class ConfigureNewRun:
         config['lidar_controller']['ros__parameters']['input_topic'] = input_topic
         config['lidar_controller']['ros__parameters']['lidar'] = lidar_folder
         config['lidar_controller']['ros__parameters']['environment'] = environment
-        config['lidar_controller']['ros__parameters']['test_results_dir'] = test_results_dir
+        config['lidar_controller']['ros__parameters']['test_results_dir'] = _BASE_DATA_PATH_ + "/" + bag_recorder_directory
+        config['lidar_controller']['ros__parameters']['metrics_results_dir'] = _METRICS_RESULTS_PATH_
         config['lidar_controller']['ros__parameters']['horizontal_resolution_deg'] = horizontal_resolution
         config['lidar_controller']['ros__parameters']['vertical_resolution_deg'] = vertical_resolution
 
@@ -182,7 +183,7 @@ class ConfigureNewRun:
 
         with _LIDAR_TEST_BENCH_YAML.open('w') as f:
             yaml.safe_dump(config, f, sort_keys=False, default_flow_style=False)
-        print(f'  lidar_test_bench.yaml  input_topic={input_topic}, lidar={lidar_folder}, environment={environment}, test_results_dir={test_results_dir}')
+        print(f'  lidar_test_bench.yaml  input_topic={input_topic}, lidar={lidar_folder}, environment={environment}, test_results_dir={_BASE_DATA_PATH_ + "/" + bag_recorder_directory}')
 
     def _update_lidar_frame_yaml(self) -> None:
         input_topic = self.lidar_params.get('point_cloud_topic')
@@ -239,7 +240,8 @@ class ConfigureNewRun:
             config = yaml.safe_load(f)
         config['grafana_reporter_node']['ros__parameters']['lidar_frame'] = lidar_frame
         config['grafana_reporter_node']['ros__parameters']['lidar'] = lidar_folder
-        config['grafana_reporter_node']['ros__parameters']['bag_directory'] = bag_directory
+        config['grafana_reporter_node']['ros__parameters']['bag_directory'] = _BASE_DATA_PATH_ + "/" + bag_directory
+        config['grafana_reporter_node']['ros__parameters']['metrics_results_dir'] = _METRICS_RESULTS_PATH_
         config['grafana_reporter_node']['ros__parameters']['lidar_cost'] = lidar_cost
         config['grafana_reporter_node']['ros__parameters']['lidar_horizontal_fov_deg'] = lidar_horizontal_fov_deg
         config['grafana_reporter_node']['ros__parameters']['lidar_vertical_fov_deg'] = lidar_vertical_fov_deg
@@ -282,7 +284,7 @@ class ConfigureNewRun:
         params['driver_command'] = driver_command
         params['driver_config_file'] = driver_config_file
         params['lidar_gui'] = lidar_gui
-        params['bag_recorder_directory'] = bag_recorder_directory
+        params['bag_recorder_directory'] = _BASE_DATA_PATH_ + "/" + bag_recorder_directory
         params['bag_recording_duration'] = bag_recording_duration
         params['pointcloud_topic'] = pointcloud_topic
         params['angles'] = angles

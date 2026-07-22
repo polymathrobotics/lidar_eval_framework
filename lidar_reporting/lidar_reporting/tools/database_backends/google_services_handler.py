@@ -3,13 +3,15 @@
 
 import json
 import os
-import shutil
 import subprocess
 import tempfile
+import zipfile
 from pathlib import Path
 from typing import Any
 
+import httplib2
 from google.oauth2 import service_account
+from google_auth_httplib2 import AuthorizedHttp
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
@@ -326,8 +328,19 @@ class GoogleServicesHandler:
 
         self._write_case_sheet(service, creds, case_folder_id, env_name, lidar_name, case_name, metrics)
 
+        # A bag upload can fail (network, oversized file) independently of the metrics/viz that
+        # already succeeded above — isolate it so one bad bag doesn't abort the rest of sync().
         for bag_dir in (bag_dirs or []):
-            self._upload_bag_folder(service, case_folder_id, Path(bag_dir))
+            try:
+                self._upload_bag_folder(service, case_folder_id, Path(bag_dir))
+            except Exception as e:
+                # flush + full traceback: this runs under ros2 launch where stdout is block-
+                # buffered, so an un-flushed message never reaches the log and the failure looks
+                # like a silent success ("sync complete" with no bag on Drive).
+                import traceback
+                print(f"❌ Bag upload FAILED for '{Path(bag_dir).name}': {type(e).__name__}: {e}",
+                      flush=True)
+                print(traceback.format_exc(), flush=True)
 
         folder = service.files().get(
             fileId=case_folder_id, fields='webViewLink', supportsAllDrives=True
@@ -460,39 +473,97 @@ class GoogleServicesHandler:
         then shares it 'anyone with the link: reader' so the dashboard can offer a direct download
         URL. Reuses an existing zip if present (just re-asserts the share) so re-syncs don't
         re-zip/re-upload gigabytes.
+
+        Bags are multi-GB and their .mcap payload is already compressed, so the zip is written
+        STORED (no DEFLATE) — bundling only, no wasted CPU — and uploaded in chunks with retry.
+        A single-shot resumable .execute() on a >1 GB file reliably trips httplib2's
+        "Redirected but the response is missing a Location: header"; chunked next_chunk() with
+        num_retries rides out the transient redirects/5xx that a long upload hits.
         """
         if not bag_dir.is_dir():
-            print(f"⚠️  Bag folder missing, skipping upload: {bag_dir}")
+            print(f"⚠️  Bag folder missing, skipping upload: {bag_dir}", flush=True)
             return
+
+        # Expected archive size ≈ sum of the bag's files (STORED = no compression, so this is
+        # within a few KB of the real zip). Used to detect a partial/zero-byte leftover from a
+        # previously-failed upload so we re-upload it instead of skipping a broken file.
+        local_size = sum(f.stat().st_size for f in bag_dir.rglob('*') if f.is_file())
 
         zip_name = f"{bag_dir.name}.zip"
+        print(f"📦 Bag upload starting: '{zip_name}' → case folder {case_folder_id} "
+              f"(source {local_size / 1e6:.1f} MB)", flush=True)
         existing_id = self._find_child_id(case_folder_id, zip_name, None)
         if existing_id:
-            print(f"♻️  Bag zip already on Drive, skipping upload: '{zip_name}'")
-            self._share_anyone(service, existing_id)
-            return
+            remote_size = self._drive_file_size(service, existing_id)
+            # Treat within 1% of expected as a complete prior upload; anything smaller is a
+            # partial/corrupt leftover — delete it and re-upload rather than skip.
+            if remote_size is not None and remote_size >= local_size * 0.99:
+                print(f"♻️  Bag zip already complete on Drive ({remote_size / 1e6:.1f} MB), "
+                      f"skipping upload: '{zip_name}'", flush=True)
+                self._share_anyone(service, existing_id)
+                return
+            print(f"⚠️  Found INCOMPLETE bag zip on Drive "
+                  f"({(remote_size or 0) / 1e6:.1f} MB vs expected {local_size / 1e6:.1f} MB) — "
+                  f"deleting and re-uploading: '{zip_name}'", flush=True)
+            try:
+                service.files().delete(fileId=existing_id, supportsAllDrives=True).execute()
+            except Exception as e:
+                print(f"⚠️  Could not delete stale zip {existing_id}: {e}", flush=True)
 
         with tempfile.TemporaryDirectory() as tmp:
-            print(f"🗜️  Zipping bag folder '{bag_dir.name}'...")
-            # base_dir=bag_dir.name keeps the rosbag2_* folder *inside* the archive,
-            # so unzipping yields a ready-to-play bag directory rather than loose files.
-            zip_path = shutil.make_archive(
-                os.path.join(tmp, bag_dir.name), 'zip',
-                root_dir=str(bag_dir.parent), base_dir=bag_dir.name,
-            )
+            zip_path = os.path.join(tmp, zip_name)
+            print(f"🗜️  Bundling bag folder '{bag_dir.name}' (stored, no compression)...", flush=True)
+            # arcname is relative to bag_dir.parent so the rosbag2_* folder stays the archive's
+            # top-level entry — unzipping yields a ready-to-play bag directory, not loose files.
+            with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_STORED, allowZip64=True) as zf:
+                for file_path in sorted(bag_dir.rglob('*')):
+                    if file_path.is_file():
+                        zf.write(file_path, file_path.relative_to(bag_dir.parent))
 
-            # resumable=True so a large zip uploads in chunks rather than one shot.
-            media = MediaFileUpload(zip_path, mimetype='application/zip', resumable=True)
-            print(f"⬆️  Uploading '{zip_name}' ({os.path.getsize(zip_path) / 1e6:.1f} MB)...")
-            uploaded = service.files().create(
+            # chunksize 100 MB: large enough to keep overhead low, small enough that a failed
+            # chunk retries cheaply. resumable=True is required for next_chunk().
+            media = MediaFileUpload(
+                zip_path, mimetype='application/zip', resumable=True, chunksize=100 * 1024 * 1024
+            )
+            print(f"⬆️  Uploading '{zip_name}' ({os.path.getsize(zip_path) / 1e6:.1f} MB)...", flush=True)
+            request = service.files().create(
                 body={'name': zip_name, 'parents': [case_folder_id]},
                 media_body=media,
                 fields='id',
                 supportsAllDrives=True,
-            ).execute()
+            )
+            # Google returns "308 Resume Incomplete" between resumable chunks — it carries a
+            # Range header but NO Location. httplib2 treats 308 as a redirect to follow and,
+            # finding no Location, raises RedirectMissingLocation, aborting every multi-chunk
+            # upload. Give next_chunk() its own http with redirect-following DISABLED so it sees
+            # the raw 308 and resumes normally. (Small metadata calls never emit a 308, so the
+            # service's default http is fine everywhere else.)
+            upload_http = httplib2.Http(timeout=300)
+            upload_http.follow_redirects = False
+            creds = service_account.Credentials.from_service_account_info(
+                self.credentials_info, scopes=self.scopes
+            )
+            authed_http = AuthorizedHttp(creds, http=upload_http)
+            response = None
+            while response is None:
+                status, response = request.next_chunk(http=authed_http, num_retries=5)
+                if status:
+                    print(f"   … {int(status.progress() * 100)}% uploaded", flush=True)
+            uploaded = response
 
         self._share_anyone(service, uploaded.get('id'))
-        print(f"🚀 Bag zip '{zip_name}' synced to Drive and shared via link.")
+        print(f"🚀 Bag zip '{zip_name}' synced to Drive and shared via link.", flush=True)
+
+    def _drive_file_size(self, service, file_id: str) -> int | None:
+        """Returns a Drive file's byte size, or None if unavailable (Google-native files
+        like Sheets report no size)."""
+        try:
+            meta = service.files().get(
+                fileId=file_id, fields='size', supportsAllDrives=True
+            ).execute()
+            return int(meta['size']) if 'size' in meta else None
+        except Exception:
+            return None
 
     def _share_anyone(self, service, file_id: str) -> None:
         """Grants 'anyone with the link: reader' on a file so it has a public download URL.
@@ -572,6 +643,7 @@ class GoogleServicesHandler:
         self,
         test_data: dict[str, dict[str, dict[str, Any]]],
         rosbags: dict[str, dict[str, list]] | None = None,
+        _lidar_metadata: dict[str, Any] | None = None
     ) -> None:
 
         rosbags = rosbags or {}
@@ -584,7 +656,7 @@ class GoogleServicesHandler:
                     flat_metrics = self._flatten_metrics(metrics)
                     if not flat_metrics:
                         continue
-                    merged = {**self._lidar_metadata, **flat_metrics}
+                    merged = {**_lidar_metadata, **flat_metrics}
                     # Bags are keyed by (lidar, case) only — the bag root is a single
                     # env, so there's no env level to match. Missing → no bag uploaded.
                     case_bags = rosbags.get(lidar_name, {}).get(case_path, [])
@@ -612,3 +684,27 @@ class GoogleServicesHandler:
                 continue
             rows.append([text])
         return rows
+
+
+    @classmethod
+    def _flatten_metrics(cls, metrics: dict[str, Any]) -> dict[str, Any]:
+        """Flatten the nested report ({zone}/{metric}/{sub}: value) into
+        slash-joined column keys. Descends arbitrarily deep so it tracks the
+        report structure; skips visualization blocks and per-cell dead-cell keys
+        wherever they appear."""
+        flat: dict[str, Any] = {}
+        cls._flatten_into(metrics, '', flat)
+        return flat
+
+    @classmethod
+    def _flatten_into(cls, node: Any, prefix: str, flat: dict[str, Any]) -> None:
+        if not isinstance(node, dict):
+            return
+        for key, val in node.items():
+            if key == 'visualization' or 'dead_cell_' in str(key) or 'worst_point_' in str(key):
+                continue
+            path = f'{prefix}/{key}' if prefix else str(key)
+            if isinstance(val, dict):
+                cls._flatten_into(val, path, flat)
+            elif isinstance(val, (int, float, str)):
+                flat[path] = val

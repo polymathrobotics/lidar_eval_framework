@@ -42,7 +42,7 @@ Defines the custom ROS 2 interfaces used throughout the framework. This package 
 
 ---
 
-### **`lidar_bench_orchestrator`**
+### **`lidar_eval_orchestrator`**
 
 The central orchestration package responsible for managing evaluation runs. It acts as the state machine for the bench, coordinating the lifecycle of data playback, point cloud processing, metric collection, and reporting workflows.
 
@@ -54,7 +54,7 @@ A modular, plugin-based math and analysis library that computes sensor performan
 
 ---
 
-### **`lidar_zones_generator`**
+### **`lidar_zones`**
 
 Generates the spatial evaluation environment used during runtime. This package consumes static configuration files (such as YAML) containing physical zone definitions, constructs the geometric bounds, and publishes the corresponding URDF models and spatial transforms (TF) to the ROS 2 system.
 
@@ -70,7 +70,7 @@ Provides automation utilities for high-level evaluation workflows, including aut
 
 Provides the reporting pipeline for aggregating, storing, and visualizing evaluation results. This package collects computed metrics from the library, processes pooled statistics, writes to structured databases, and generates finalized performance reports.
 
----
+---\
 
 ### **`lidar_pointcloud_filter`**
 

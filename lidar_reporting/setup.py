@@ -1,23 +1,31 @@
-from setuptools import find_packages, setup
+import os
+from setuptools import setup
 
 package_name = 'lidar_reporting'
 
 setup(
     name=package_name,
     version='0.0.0',
-    packages=find_packages(exclude=['test']),
+    # Explicitly declaration guarantees all submodules are bundled into the install space
+    packages=[
+        'lidar_reporting',
+        'lidar_reporting.nodes',
+        'lidar_reporting.tools',
+        'lidar_reporting.tools.database_backends',
+    ],
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/config', ['config/config.yaml', 'config/metrics_registry.yaml']),
+        ('share/' + package_name + '/config',
+            ['config/config.yaml', 'config/metrics_registry.yaml', 'lidar_reporting/tools/database_registry.yaml']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='aarush',
     maintainer_email='aarush@polymathrobotics.com',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description='Polymath Robotics LiDAR evaluation reporting node',
+    license='Proprietary',
     extras_require={
         'test': [
             'pytest',
