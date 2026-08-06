@@ -138,7 +138,7 @@ Sometimes a knob shouldn't be a fixed number — it should follow the zones (e.g
 `spatial_dropout.cell_size_m` scaling with how far the target sits from the sensor). Two ways to do it:
 
 - **Override plugin (cleaner).** Add a file named `<metric>__<param>__override.py` in
-  [metric_params_overrides/](../../lidar_metrics_library/lidar_metrics/metric_params_overrides/),
+  [metric_params_overrides/](../../lidar_metrics_library/lidar_metrics/metric_params_overrides/spatial_dropout__cell_size_m__override.py),
   subclass `OverrideInterfaceBase`, and compute the value from `self.profiles` in `retrieve_param()`.
   The engine finds it by filename — no registration — and writes the result into `config.yaml` before
   the run.

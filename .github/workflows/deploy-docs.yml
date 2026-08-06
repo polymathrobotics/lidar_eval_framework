@@ -1,0 +1,67 @@
+---
+name: Deploy Developer Docs
+
+# Builds the Docusaurus site in developer_docs/ and publishes it to GitHub Pages at
+# https://polymathrobotics.github.io/lidar_eval_framework/
+#
+# Uses the GitHub Pages Actions flow (upload-pages-artifact + deploy-pages) rather than
+# pushing to a gh-pages branch, so no deploy key or PAT is needed — the job's OIDC token
+# is enough. Requires Settings > Pages > Source = "GitHub Actions" (one-time, in the UI).
+
+on:
+  push:
+    branches: [main]
+    # Only rebuild when the docs actually change.
+    paths:
+      - 'developer_docs/**'
+      - '.github/workflows/deploy-docs.yml'
+  workflow_dispatch:
+
+# Least privilege: read the repo, write Pages, and mint the OIDC token deploy-pages needs.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; queue instead of cancelling so a merged PR always lands.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: developer_docs
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: developer_docs/package-lock.json
+
+      # `npm ci` (not `install`) so the build uses the committed lockfile exactly.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build site
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: developer_docs/build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
