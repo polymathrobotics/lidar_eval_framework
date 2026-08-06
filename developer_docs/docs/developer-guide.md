@@ -42,7 +42,7 @@ and silently skip the sync.
 
 At Polymath, credentials live in **1Password**, and the default backend
 (`GoogleServicesHandler`, in
-[lidar_reporting/lidar_reporting/tools/database_backends/google_services_handler.py](../../lidar_reporting/lidar_reporting/tools/database_backends/google_services_handler.py))
+[lidar_eval_backends/.../google_services_handler.py](../../lidar_eval_backends/lidar_eval_backends/database_backends/google/google_services_handler.py))
 pulls a Google service-account JSON dynamically at runtime:
 
 1. It looks for a live `OP_SESSION_*` token in your environment; if none is valid it runs
@@ -60,7 +60,7 @@ own:
 1. Add a new handler under `lidar_reporting/lidar_reporting/tools/database_backends/` implementing
    `authenticate()` — fetch your credentials from wherever you keep them (env var, vault, file, etc.).
 2. Register it in
-   [lidar_reporting/lidar_reporting/tools/database_registry.yaml](../../lidar_reporting/lidar_reporting/tools/database_registry.yaml)
+   [lidar_eval_backends/lidar_eval_backends/database_registry.yaml](../../lidar_eval_backends/lidar_eval_backends/database_registry.yaml)
    with its `class`, `executable` (module name), and `enabled: true`. The
    `LidarDatabaseHandler` loads the **first enabled** backend from that registry, so make sure only
    the one you want is enabled.
@@ -135,7 +135,7 @@ You do **not** hand-write a list of servo angles. Instead, you just provide the 
 layout, and polysetup does the geometry for you.
 
 When you configure a run, polysetup's `compute_panning_angles`
-([polysetup/polysetup_utils.py](../../polysetup/polysetup_utils.py)) works in three steps:
+([polysetup/polysetup_utils.py](../../polysetup/polysetup/polysetup_utils.py)) works in three steps:
 
 1. **Resolve every zone.** It walks the environment file's `world_placement` + `zone_joints` to find
    each zone's center, then uses each zone's `length` to expand that center out to its **edges**.
@@ -149,7 +149,7 @@ When you configure a run, polysetup's `compute_panning_angles`
    seen from one edge of the field of view to the other.
 
 Those computed angles are written straight into `automation_manager.yaml`
-([polysetup/configure_new_run.py](../../polysetup/configure_new_run.py)); the automation manager reads
+([polysetup/configure_new_run.py](../../polysetup/polysetup/configure_new_run.py)); the automation manager reads
 them from there at launch. So the only inputs you maintain are the FOV numbers and the zone geometry.
 
 > **Current scope:** angle computation uses the **horizontal** FOV to compute the pan (left/right)

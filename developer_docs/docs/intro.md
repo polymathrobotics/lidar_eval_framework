@@ -103,4 +103,4 @@ First, clone the repository and navigate into the project root:
 
 ```bash
 git clone https://github.com/polymathrobotics/lidar_eval_framework
-cd lidar-eval-framework
+cd lidar_eval_framework
