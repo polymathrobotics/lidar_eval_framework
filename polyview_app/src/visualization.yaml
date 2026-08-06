@@ -1,0 +1,385 @@
+# Consolidated visualization config for PolyView.
+#
+#   config:  chart styling            (was chart_config.yaml)
+#   schemas: metric schemas driving   (was visualization_schemas.yaml)
+#            the radar/box/error-bar views
+#
+# VisualizationHandler.__init__ reads exactly these two top-level keys.
+
+config:
+  count_bar_color: 'rgba(150,120,255,0.85)'
+
+  zone_fill_colors:
+    great: 'rgba(57,255,20,0.28)'
+    ok_1:  'rgba(255,220,0,0.30)'
+    ok_2:  'rgba(255,100,0,0.30)'
+    bad_1: 'rgba(255,50,50,0.30)'
+    bad_2: 'rgba(160,0,200,0.30)'
+
+  zone_legend_colors:
+    great: 'rgba(57,255,20,0.9)'
+    ok_1:  'rgba(255,220,0,0.9)'
+    ok_2:  'rgba(255,100,0,0.9)'
+    bad_1: 'rgba(255,50,50,0.9)'
+    bad_2: 'rgba(160,0,200,0.9)'
+
+  palette:
+    - '#00BFFF'
+    - '#FF6B6B'
+    - '#FFD700'
+    - '#39FF14'
+    - '#DA70D6'
+    - '#FF8C00'
+    - '#00FA9A'
+    - '#FF69B4'
+
+  metric_chart:
+    height: 280
+    margin_top: 55
+    margin_bottom: 100
+    margin_left: 60
+    margin_right: 160
+    label_y_paper: 1.08
+    label_font_size: 9
+    tick_font_size: 10
+    tick_angle: -35
+    bar_border_color: 'rgba(255,255,255,0.3)'
+    bar_border_width: 0.5
+    zone_border_width: 1.5
+    legend_font_size: 9
+    legend_marker_size: 10
+    legend_x: 1.02
+    legend_y: 1.0
+    legend_xanchor: 'left'
+    legend_yanchor: 'top'
+
+  layout:
+    template: 'plotly_dark'
+    title: 'LiDAR Metrics Comparison'
+    title_font_size: 26
+    legend_title: 'LiDAR'
+    legend_font_size: 13
+    subplot_vertical_spacing: 0.04
+    subplot_height_per_row: 550
+    subplot_title_font_size: 16
+    bar_opacity: 0.85
+    axis_label_font_size: 12
+    tick_font_size: 11
+    bar_text_font_size: 11
+    background_color: '#0e1117'
+    paper_color: '#0e1117'
+
+schemas:
+  abstract_metrics:
+
+    Geometrical_Accuracy:
+      - category: RangeDistributionHealth
+        keys:
+          - key: _range_error_pct_mean
+            label: Mean Range Error (%) · pooled
+            description: >
+              Mean percentage range error pooled over every point in every scan.
+              Lower is better — captures consistent bias in the sensor's ranging.
+          - key: _range_error_pct_per_scan_mean
+            label: Mean Range Error (%) · per scan
+            description: >
+              Per-scan mean percentage range error, averaged across scans. Robust to
+              one-off outliers — reflects the typical scan rather than the whole pool.
+          - key: _worst_range_error_pct
+            label: Worst Range Error (%)
+            description: >
+              Largest single percentage range error seen anywhere in the zone.
+              A conservative upper bound on the sensor's worst-case ranging error.
+      - category: ZoneSurfaceDepthError
+        keys:
+          - key: _depth_error_pct_mean
+            label: Mean Depth Error (%) · pooled
+            description: >
+              Mean percentage depth error pooled over every point in every scan.
+              Lower is better — a high mean indicates a consistent bias or miscalibration.
+          - key: _depth_error_pct_per_scan_mean
+            label: Mean Depth Error (%) · per scan
+            description: >
+              Per-scan mean percentage depth error, averaged across scans. Robust to
+              one-off outliers — reflects the typical scan rather than the whole pool.
+          - key: _worst_depth_error_pct
+            label: Worst Depth Error (%)
+            description: >
+              Largest single percentage depth error seen anywhere in the zone.
+              A conservative upper bound on how wrong the sensor's depth can get.
+
+    Point_Cloud_Health:
+      - category: SpatialDropout
+        keys:
+          - key: _dropout_frac
+            label: Total Point Dropout Rate
+            description: >
+              Fraction of grid cells in the zone that were never hit across the entire test run (0 = every cell got at least one return, 1 = nothing was ever detected).
+              Lower is better — high values indicate permanently dead regions (blocked channels, hardware defects), not transient scan-pattern jitter.
+      - category: AverageSpatialDropout
+        keys:
+          - key: _avg_dropout_frac
+            label: Average Per-Scan Dropout Rate
+            description: >
+              Average fraction of the zone missed on a typical single scan, across all frames in the run.
+              Captures scan-pattern jitter that SpatialDropout misses (cells hit some frames and missed others).
+              Lower is better — higher values indicate the sensor's scan pattern shifts noticeably between frames.
+
+    Stability:
+      - category: DepthConsistency
+        keys:
+          - key: _depth_temporal_std_pct
+            label: Depth Consistency (%)
+            description: >
+              Frame-to-frame depth fluctuation on a static target, as a percent of the mean depth.
+              Lower is better — high values indicate a jittery or unstable point cloud even when nothing is moving.
+      - category: RangeConsistency
+        keys:
+          - key: _range_precision_std_pct
+            label: Range Consistency (%)
+            description: >
+              Frame-to-frame 3D range fluctuation on a static target, as a percent of the mean range.
+              Lower is better — high values indicate unstable ranging between scans.
+
+    Surface_Quality:
+      - category: NearestNeighbourSpacing
+        keys:
+          - key: _nn_mean
+            label: Mean Point Spacing
+            value_suffix: ' m'
+            description: >
+              Average nearest-neighbour spacing between returns on the surface (meters).
+              Lower is better — denser sampling / higher effective resolution.
+      - category: LocalRoughnessKNN
+        keys:
+          - key: _rough_mean
+            label: Surface Roughness
+            value_suffix: ' m'
+            description: >
+              Mean local surface roughness — scatter of points around the local surface (meters).
+              Lower is better; higher means a noisier, less cleanly resolved surface.
+      - category: SurfaceFitResidual
+        keys:
+          - key: _fit_rms
+            label: Surface Flatness (RMS)
+            value_suffix: ' m'
+            description: >
+              RMS residual of a plane fit to the surface (meters).
+              Lower is better; higher means warping or noise off the plane.
+
+
+
+
+  key_labels:
+    zones:
+      blue_suitcase: Blue Suitcase
+      whiteboard: Whiteboard
+      green_wall: Green Wall
+    suffixes:
+      # LocalRoughnessKNN
+      rough_mean: Roughness Mean
+      rough_n: Count
+      rough_p50: Roughness 50th Percentile
+      rough_p90: Roughness 90th Percentile
+      rough_p99: Roughness 99th Percentile
+      rough_std: Roughness Std Dev
+      # NearestNeighbourSpacing
+      nn_mean: Neighbour Spacing Mean
+      nn_outlier_frac: Neighbour Spacing Outlier Fraction
+      nn_p50: Neighbour Spacing 50th Percentile
+      nn_p90: Neighbour Spacing 90th Percentile
+      nn_p99: Neighbour Spacing 99th Percentile
+      # PointYieldPerZone
+      point_count: Point Count
+      yield_frac: Yield
+      # RangeDistributionHealth
+      range_mean: Range Mean
+      range_mean_expected: Expected Mean
+      range_min: Range Min
+      range_max: Range Max
+      range_p10: Range 10th Percentile
+      range_p50: Range 50th Percentile
+      range_p90: Range 90th Percentile
+      range_p99: Range 99th Percentile
+      range_std: Range Std Dev
+      # RangePrecision
+      range_precision_mean: Precision Mean
+      range_precision_std: Precision Std Dev
+      # SurfaceFitResidual
+      fit_rms: Fit RMS
+      fit_x_offset: Fit Offset
+      # TemporalConsistency
+      depth_temporal_mean: Temporal Mean
+      depth_temporal_std: Temporal Std Dev
+      depth_temporal_std_pct: Temporal Std Dev %
+      # ZoneSurfaceDepthError
+      depth_error_max_abs: Max Abs Error
+      depth_error_max_abs_pct: Max Abs Error %
+      depth_error_mean: Mean Error
+      depth_error_mean_pct: Mean Error %
+      depth_error_std: Error Std Dev
+      depth_error_std_pct: Error Std Dev %
+      # SpatialDropout
+      dropout_frac: Dropout Fraction
+      dropout_cell_count: Dead Cells
+      total_cell_count: Total Cells
+      # AverageSpatialDropout
+      avg_dropout_frac: Avg Per-Scan Dropout Fraction
+      mean_cell_hit_rate: Mean Cell Hit Rate
+
+  category_groups:
+    Geometrical Metrics:
+      - ZoneSurfaceDepthError
+      - LocalRoughnessKNN
+      - NearestNeighbourSpacing
+      - RangePrecision
+      - SurfaceFitResidual
+      - RangeDistributionHealth
+    Stability Metrics:
+      - TemporalConsistency
+    Point Cloud Health Metrics:
+      - SpatialDropout
+      - AverageSpatialDropout
+      - PointYieldPerZone
+
+  zone_radar_metrics:
+    LocalRoughnessKNN:
+      keys:
+        - key_suffix: rough_mean
+          threshold_key: LocalRoughnessKNN
+          lower_is_better: true
+    NearestNeighbourSpacing:
+      keys:
+        - key_suffix: nn_mean
+          threshold_key: NearestNeighbourSpacing
+          lower_is_better: true
+    RangePrecision:
+      keys:
+        - key_suffix: range_precision_std
+          threshold_key: RangePrecision
+          lower_is_better: true
+    SpatialDropout:
+      keys:
+        - key_suffix: dropout_frac
+          threshold_key: SpatialDropout
+          lower_is_better: true
+    SurfaceFitResidual:
+      keys:
+        - key_suffix: fit_rms
+          threshold_key: "SurfaceFitResidual \xB7 rms"
+          lower_is_better: true
+        - key_suffix: fit_x_offset
+          threshold_key: "SurfaceFitResidual \xB7 offset"
+          lower_is_better: true
+    TemporalConsistency:
+      keys:
+        - key_suffix: depth_temporal_std
+          threshold_key: TemporalConsistency
+          lower_is_better: true
+    ZoneSurfaceDepthError:
+      keys:
+        - key_suffix: depth_error_mean
+          threshold_key: ZoneSurfaceDepthError
+          lower_is_better: true
+        - key_suffix: depth_error_std
+          threshold_key: ZoneSurfaceDepthError
+          lower_is_better: true
+    PointYieldPerZone:
+      keys:
+        - key_suffix: yield_frac
+          threshold_key: PointYieldPerZone
+          lower_is_better: false
+
+  category_units:
+    RangeDistributionHealth: m
+    LocalRoughnessKNN: m
+    NearestNeighbourSpacing: m
+    RangePrecision: m
+    TemporalConsistency: m
+    ZoneSurfaceDepthError: m
+    SurfaceFitResidual: m
+    SpatialDropout: fraction
+    AverageSpatialDropout: fraction
+    PointYieldPerZone: fraction
+
+  box_mappings:
+    RangeDistributionHealth:
+      low: range_min
+      q1: range_p10
+      median: range_p50
+      q3: range_p90
+      high: range_p99
+      mean: range_mean
+      std: range_std
+
+  error_bar_mappings:
+    LocalRoughnessKNN:
+      - label: rough mean
+        mean_key: rough_mean
+        std_key: rough_std
+    NearestNeighbourSpacing:
+      - label: nn p50
+        mean_key: nn_p50
+        std_key: null
+      - label: nn p90
+        mean_key: nn_p90
+        std_key: null
+      - label: nn p99
+        mean_key: nn_p99
+        std_key: null
+      - label: nn mean
+        mean_key: nn_mean
+        std_key: null
+    RangePrecision:
+      - label: green_wall
+        mean_key: green_wall_range_precision_mean
+        std_key: green_wall_range_precision_std
+      - label: whiteboard
+        mean_key: whiteboard_range_precision_mean
+        std_key: whiteboard_range_precision_std
+    TemporalConsistency:
+      - label: green_wall
+        mean_key: green_wall_depth_temporal_mean
+        std_key: green_wall_depth_temporal_std
+      - label: whiteboard
+        mean_key: whiteboard_depth_temporal_mean
+        std_key: whiteboard_depth_temporal_std
+  fraction_metrics:
+    SpatialDropout:
+      - green_wall_dropout_frac
+      - whiteboard_dropout_frac
+    AverageSpatialDropout:
+      - green_wall_avg_dropout_frac
+      - whiteboard_avg_dropout_frac
+    PointYieldPerZone:
+      - green_wall_yield_frac
+      - whiteboard_yield_frac
+
+  radar_metrics:
+    LocalRoughnessKNN:
+      key: rough_mean
+      lower_is_better: true
+    NearestNeighbourSpacing:
+      key: nn_mean
+      lower_is_better: true
+    PointYieldPerZone:
+      key: green_wall_yield_frac
+      lower_is_better: false
+    RangeDistributionHealth:
+      key: range_std
+      lower_is_better: true
+    RangePrecision:
+      key: green_wall_range_precision_std
+      lower_is_better: true
+    SpatialDropout:
+      key: green_wall_dropout_frac
+      lower_is_better: true
+    SurfaceFitResidual:
+      key: green_wall_fit_rms
+      lower_is_better: true
+    TemporalConsistency:
+      key: green_wall_depth_temporal_std
+      lower_is_better: true
+    ZoneSurfaceDepthError:
+      key: green_wall_depth_error_std
+      lower_is_better: true

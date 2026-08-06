@@ -1,0 +1,242 @@
+# Consolidated threshold config for PolyView.
+#
+#   thresholds:          baseline per-metric thresholds (settings.yaml overrides these)
+#   abstract_thresholds: per-category bands for the abstract scoring view
+#   lidar_overrides:     per-lidar overrides, merged over `thresholds` by _resolve_thresholds
+#
+# Replaces the former defaults.yaml + lidar_thresholds.yaml pair.
+
+thresholds:
+  "RangeDistributionHealth · std":
+    great:  {enabled: false, min: 0.0,   max: 0.030, label: 'Tight'}
+    ok_1:   {enabled: false, min: 0.030, max: 0.150, label: 'Acceptable'}
+    ok_2:   {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+    bad_1:  {enabled: false, min: 0.150, max: 3.04,  label: 'Noisy'}
+    bad_2:  {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+
+  LocalRoughnessKNN:
+    great:  {enabled: false, min: 0.0,   max: 0.002, label: 'Smooth'}
+    ok_1:   {enabled: false, min: 0.002, max: 0.008, label: 'Acceptable'}
+    ok_2:   {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+    bad_1:  {enabled: false, min: 0.008, max: 0.1,   label: 'Noisy'}
+    bad_2:  {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+
+  NearestNeighbourSpacing:
+    great:  {enabled: false, min: 0.0,   max: 0.02,  label: 'Dense'}
+    ok_1:   {enabled: false, min: 0.02,  max: 0.05,  label: 'Acceptable'}
+    ok_2:   {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+    bad_1:  {enabled: false, min: 0.05,  max: 0.5,   label: 'Sparse'}
+    bad_2:  {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+
+  RangePrecision:
+    great:  {enabled: false, min: 0.0,   max: 0.003, label: 'Precise'}
+    ok_1:   {enabled: false, min: 0.003, max: 0.01,  label: 'Acceptable'}
+    ok_2:   {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+    bad_1:  {enabled: false, min: 0.01,  max: 0.1,   label: 'Imprecise'}
+    bad_2:  {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+
+  TemporalConsistency:
+    great:  {enabled: false, min: 0.0,   max: 0.003, label: 'Stable'}
+    ok_1:   {enabled: false, min: 0.003, max: 0.015, label: 'Acceptable'}
+    ok_2:   {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+    bad_1:  {enabled: false, min: 0.015, max: 0.5,   label: 'Unstable'}
+    bad_2:  {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+
+  ZoneSurfaceDepthError:
+    great:  {enabled: false, min: 0.0,   max: 0.01,  label: 'Accurate'}
+    ok_1:   {enabled: false, min: 0.01,  max: 0.05,  label: 'Acceptable'}
+    ok_2:   {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+    bad_1:  {enabled: false, min: 0.05,  max: 1.0,   label: 'Offset'}
+    bad_2:  {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+
+  "SurfaceFitResidual · rms":
+    great:  {enabled: false, min: 0.0,   max: 0.005, label: 'Flat'}
+    ok_1:   {enabled: false, min: 0.005, max: 0.010, label: 'Acceptable'}
+    ok_2:   {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+    bad_1:  {enabled: false, min: 0.010, max: 0.1,   label: 'Warped'}
+    bad_2:  {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+
+  "SurfaceFitResidual · offset":
+    great:  {enabled: false, min: 0.0,   max: 0.010, label: 'Aligned'}
+    ok_1:   {enabled: false, min: 0.010, max: 0.030, label: 'Acceptable'}
+    ok_2:   {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+    bad_1:  {enabled: false, min: 0.030, max: 0.2,   label: 'Misaligned'}
+    bad_2:  {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+
+  SpatialDropout:
+    great:  {enabled: false, min: 0.0,   max: 0.02,  label: 'Healthy'}
+    ok_1:   {enabled: false, min: 0.02,  max: 0.08,  label: 'Acceptable'}
+    ok_2:   {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+    bad_1:  {enabled: false, min: 0.08,  max: 1.0,   label: 'Dropping'}
+    bad_2:  {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+
+  AverageSpatialDropout:
+    great:  {enabled: false, min: 0.0,   max: 0.02,  label: 'Healthy'}
+    ok_1:   {enabled: false, min: 0.02,  max: 0.08,  label: 'Acceptable'}
+    ok_2:   {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+    bad_1:  {enabled: false, min: 0.08,  max: 1.0,   label: 'Dropping'}
+    bad_2:  {enabled: false, min: 0.0,   max: 0.0,   label: ''}
+
+  PointYieldPerZone:
+    - keys: [whiteboard_yield_frac]
+      great:  {enabled: false, min: 0.75, max: 1.0,  label: 'Good'}
+      ok_1:   {enabled: false, min: 0.5,  max: 0.75, label: 'Partial'}
+      ok_2:   {enabled: false, min: 0.0,  max: 0.0,  label: ''}
+      bad_1:  {enabled: false, min: 0.0,  max: 0.5,  label: 'Low Yield'}
+      bad_2:  {enabled: false, min: 0.0,  max: 0.0,  label: ''}
+    - keys: [green_wall_yield_frac]
+      great:  {enabled: false, min: 0.2,  max: 1.0,  label: 'Good'}
+      ok_1:   {enabled: false, min: 0.1,  max: 0.2,  label: 'Partial'}
+      ok_2:   {enabled: false, min: 0.0,  max: 0.0,  label: ''}
+      bad_1:  {enabled: false, min: 0.0,  max: 0.1,  label: 'Low Yield'}
+      bad_2:  {enabled: false, min: 0.0,  max: 0.0,  label: ''}
+
+abstract_thresholds:
+  ZoneSurfaceDepthError:
+    lower_is_better: true
+    keys:
+      _depth_error_pct_mean:
+        great: {min: 0.0,  max: 1.0}
+        ok:    {min: 1.0,  max: 3.0}
+        bad:   {min: 3.0,  max: 10.0}
+      _depth_error_pct_per_scan_mean:
+        great: {min: 0.0,  max: 1.0}
+        ok:    {min: 1.0,  max: 3.0}
+        bad:   {min: 3.0,  max: 10.0}
+      _worst_depth_error_pct:
+        great: {min: 0.0,  max: 3.0}
+        ok:    {min: 3.0,  max: 7.0}
+        bad:   {min: 7.0,  max: 20.0}
+
+  RangeDistributionHealth:
+    lower_is_better: true
+    keys:
+      _range_error_pct_mean:
+        great: {min: 0.0,  max: 1.0}
+        ok:    {min: 1.0,  max: 3.0}
+        bad:   {min: 3.0,  max: 10.0}
+      _range_error_pct_per_scan_mean:
+        great: {min: 0.0,  max: 1.0}
+        ok:    {min: 1.0,  max: 3.0}
+        bad:   {min: 3.0,  max: 10.0}
+      _worst_range_error_pct:
+        great: {min: 0.0,  max: 3.0}
+        ok:    {min: 3.0,  max: 7.0}
+        bad:   {min: 7.0,  max: 20.0}
+
+  DepthConsistency:
+    lower_is_better: true
+    keys:
+      _depth_temporal_std_pct:
+        great: {min: 0.0,   max: 0.02}
+        ok:    {min: 0.02,  max: 0.1}
+        bad:   {min: 0.1,   max: 0.5}
+
+  RangeConsistency:
+    lower_is_better: true
+    keys:
+      _range_precision_std_pct:
+        great: {min: 0.0,   max: 0.02}
+        ok:    {min: 0.02,  max: 0.1}
+        bad:   {min: 0.1,   max: 0.5}
+
+  SpatialDropout:
+    lower_is_better: true
+    keys:
+      _dropout_frac:
+        great: {min: 0.0,  max: 0.05}
+        ok:    {min: 0.05, max: 0.20}
+        bad:   {min: 0.20, max: 1.0}
+
+  AverageSpatialDropout:
+    lower_is_better: true
+    keys:
+      # Per-scan dropout is structurally >= the total (it counts transient misses
+      # too), so its bands run ~3x looser than Total Point Dropout — single-scan
+      # sparsity is expected, permanent dead cells are not.
+      _avg_dropout_frac:
+        great: {min: 0.0,  max: 0.15}
+        ok:    {min: 0.15, max: 0.35}
+        bad:   {min: 0.35, max: 1.0}
+
+  # Surface-quality bands are in METERS (raw values, stopgap). Reused from the
+  # existing per-metric thresholds; revisit once these are normalized to % of range.
+  NearestNeighbourSpacing:
+    lower_is_better: true
+    keys:
+      _nn_mean:
+        great: {min: 0.0,  max: 0.04}  # Under 4 cm: Dense, excellent feature tracking
+        ok:    {min: 0.04, max: 0.12}  # 4 cm to 12 cm: Normal density for mid-range perception
+        bad:   {min: 0.12, max: 0.50}  # Over 12 cm: Sparse, risking missed small obstacles
+
+  LocalRoughnessKNN:
+    lower_is_better: true
+    keys:
+      _rough_mean:
+        great: {min: 0.0,   max: 0.015} # Under 1.5 cm: Very clean flat surfaces/low noise
+        ok:    {min: 0.015, max: 0.040} # 1.5 cm to 4 cm: Expected real-world outdoor surface noise
+        bad:   {min: 0.040, max: 0.150} # Over 4 cm: High edge-bleeding, heavy noise, or artifacts
+
+  SurfaceFitResidual:
+    lower_is_better: true
+    keys:
+      _fit_rms:
+        great: {min: 0.0,   max: 0.020} # Under 2 cm: Tight geometric fit, standard sensor accuracy limit
+        ok:    {min: 0.020, max: 0.060} # 2 cm to 6 cm: Tolerable variance over mixed geometric regions
+        bad:   {min: 0.060, max: 0.200} # Over 6 cm: Terrible fit, mixing distinct objects or severe distortion
+
+lidar_overrides:
+  E1R:
+    RangeDistributionHealth:
+      bad_1:
+        enabled: true
+        label: Way Farther
+        max: 2.5
+        min: 2.3
+      bad_2:
+        enabled: true
+        label: Way Near
+        max: 1.8
+        min: 1.5
+      great:
+        enabled: true
+        label: Accurate
+        max: 2.08
+        min: 1.93
+      ok_1:
+        enabled: true
+        label: Slightly Farther
+        max: 2.3
+        min: 2.08
+      ok_2:
+        enabled: true
+        label: Slightly Near
+        max: 1.93
+        min: 1.8
+  Hesai:
+    RangeDistributionHealth:
+      bad_1:
+        enabled: true
+        label: Way Farther
+        max: 2.65
+        min: 2.55
+      bad_2:
+        enabled: true
+        label: Way Near
+        max: 2.15
+        min: 2.0
+      great:
+        enabled: true
+        label: Accurate
+        max: 2.41
+        min: 2.3
+      ok_1:
+        enabled: true
+        label: Slightly Farther
+        max: 2.55
+        min: 2.41
+      ok_2:
+        enabled: true
+        label: Slightly Near
+        max: 2.3
+        min: 2.15

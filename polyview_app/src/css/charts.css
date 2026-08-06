@@ -1,0 +1,23 @@
+/* Brand-colored glow border around every Plotly chart.
+   Variables (--brand-primary-rgb, --brand-accent-rgb) are defined in logo.css. */
+.stPlotlyChart {
+    border-radius: 10px;
+    border: 1px solid rgba(var(--brand-primary-rgb), 0.2);
+    box-shadow:
+        0 0 12px rgba(var(--brand-primary-rgb), 0.1),
+        0 0 30px rgba(var(--brand-accent-rgb), 0.05),
+        0 4px 24px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+/* Subtle glow filter on the SVG itself */
+.stPlotlyChart > div > div > svg {
+    filter: drop-shadow(0 0 4px rgba(var(--brand-primary-rgb), 0.15));
+}
+
+/* Styled divider */
+hr {
+    border-color: rgba(var(--brand-primary-rgb), 0.15) !important;
+    margin: 24px 0 !important;
+}

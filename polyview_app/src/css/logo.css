@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+/* ── Brand Palette ─────────────────────────────────────────────── */
+/* Polymath Purple — primary brand color (emphasis: logos, borders, headers) */
+/* Outer Space    — dark neutral (backgrounds, panels)                       */
+/* Lime Green     — accent only (hover, success, spinner)                    */
+:root {
+    --brand-primary: #5138EE;
+    --brand-primary-rgb: 81, 56, 238;
+    --brand-bg: #0A071B;
+    --brand-bg-rgb: 10, 7, 27;
+    --brand-accent: #D1EE78;
+    --brand-accent-rgb: 209, 238, 120;
+}
+
+/* ── Logo ──────────────────────────────────────────────────────── */
+.polyview-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    text-shadow:
+        0 0 6px rgba(var(--brand-primary-rgb), 0.9),
+        0 0 14px rgba(var(--brand-primary-rgb), 0.6),
+        0 0 30px rgba(var(--brand-primary-rgb), 0.3),
+        0 0 60px rgba(var(--brand-primary-rgb), 0.15);
+    padding: 12px 0 4px 0;
+    display: block;
+}
+
+.polyview-tagline {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+    padding-bottom: 16px;
+    display: block;
+}
+
+.polyview-divider {
+    border: none;
+    border-top: 1px solid rgba(var(--brand-primary-rgb), 0.25);
+    margin: 0 0 20px 0;
+    box-shadow: 0 0 8px rgba(var(--brand-primary-rgb), 0.12);
+}
+
+/* ── Global font ───────────────────────────────────────────────── */
+html, body, [class*="css"] {
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────── */
+[data-testid="stSidebar"] {
+    background: rgba(var(--brand-bg-rgb), 0.97) !important;
+    border-right: 1px solid rgba(var(--brand-primary-rgb), 0.18) !important;
+}
+
+/* ── Main area ─────────────────────────────────────────────────── */
+.main .block-container {
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+.stButton > button {
+    background: transparent !important;
+    border: 1px solid rgba(var(--brand-primary-rgb), 0.4) !important;
+    color: #FFFFFF !important;
+    border-radius: 5px !important;
+    font-family: 'Share Tech Mono', monospace !important;
+    letter-spacing: 1px !important;
+    transition: all 0.18s ease !important;
+}
+
+.stButton > button:hover {
+    background: rgba(var(--brand-accent-rgb), 0.1) !important;
+    border-color: var(--brand-accent) !important;
+    color: var(--brand-accent) !important;
+    box-shadow: 0 0 14px rgba(var(--brand-accent-rgb), 0.3) !important;
+}
+
+/* ── Selectboxes ───────────────────────────────────────────────── */
+[data-testid="stSelectbox"] > div > div {
+    background: rgba(var(--brand-bg-rgb), 0.9) !important;
+    border: 1px solid rgba(var(--brand-primary-rgb), 0.22) !important;
+    border-radius: 5px !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-testid="stSelectbox"] > div > div:focus-within {
+    border-color: rgba(var(--brand-primary-rgb), 0.6) !important;
+    box-shadow: 0 0 8px rgba(var(--brand-primary-rgb), 0.2) !important;
+}
+
+/* ── Multiselect ───────────────────────────────────────────────── */
+[data-testid="stMultiSelect"] > div > div {
+    background: rgba(var(--brand-bg-rgb), 0.9) !important;
+    border: 1px solid rgba(var(--brand-primary-rgb), 0.22) !important;
+    border-radius: 5px !important;
+}
+
+/* ── Subheaders ────────────────────────────────────────────────── */
+h3 {
+    color: #FFFFFF !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    font-size: 12px !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+/* ── Expanders ─────────────────────────────────────────────────── */
+[data-testid="stExpander"] {
+    border: 1px solid rgba(var(--brand-primary-rgb), 0.15) !important;
+    border-radius: 6px !important;
+    background: rgba(var(--brand-bg-rgb), 0.5) !important;
+    margin-bottom: 6px !important;
+}
+
+[data-testid="stExpander"] summary {
+    color: rgba(255, 255, 255, 0.75) !important;
+    letter-spacing: 1px !important;
+}
+
+/* ── Success / info / warning alerts ──────────────────────────── */
+[data-testid="stAlert"][data-baseweb="notification"] {
+    border-radius: 6px !important;
+}
+
+div[data-testid="stSuccessMessage"],
+div.stSuccess {
+    background: rgba(var(--brand-accent-rgb), 0.12) !important;
+    border: 1px solid rgba(var(--brand-accent-rgb), 0.4) !important;
+    border-radius: 6px !important;
+}
+
+div[data-testid="stInfoMessage"],
+div.stInfo {
+    background: rgba(0, 191, 255, 0.07) !important;
+    border: 1px solid rgba(0, 191, 255, 0.25) !important;
+    border-radius: 6px !important;
+}
+
+/* ── Form inputs (settings page) ──────────────────────────────── */
+[data-testid="stNumberInput"] input,
+[data-testid="stTextInput"] input {
+    background: rgba(var(--brand-bg-rgb), 0.9) !important;
+    border: 1px solid rgba(var(--brand-primary-rgb), 0.2) !important;
+    border-radius: 4px !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-family: 'Share Tech Mono', monospace !important;
+}
+
+[data-testid="stNumberInput"] input:focus,
+[data-testid="stTextInput"] input:focus {
+    border-color: rgba(var(--brand-primary-rgb), 0.55) !important;
+    box-shadow: 0 0 6px rgba(var(--brand-primary-rgb), 0.18) !important;
+}
+
+/* ── Checkboxes ────────────────────────────────────────────────── */
+[data-testid="stCheckbox"] > label > div:first-child {
+    border-color: rgba(var(--brand-primary-rgb), 0.4) !important;
+    background: rgba(var(--brand-bg-rgb), 0.9) !important;
+    border-radius: 3px !important;
+}
+
+/* ── Dividers ──────────────────────────────────────────────────── */
+hr {
+    border-color: rgba(var(--brand-primary-rgb), 0.15) !important;
+    margin: 20px 0 !important;
+}
+
+/* ── Spinner ───────────────────────────────────────────────────── */
+[data-testid="stSpinner"] > div {
+    border-top-color: var(--brand-accent) !important;
+}
