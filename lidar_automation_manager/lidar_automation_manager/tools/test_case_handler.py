@@ -1,5 +1,5 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc. All rights reserved
-# Proprietary. Any unauthorized copying, distribution, or modification of this software is strictly prohibited.
+# Copyright (c) 2025-present Polymath Robotics, Inc.
+# SPDX-License-Identifier: Apache-2.0
 
 from rclpy.parameter import Parameter
 
@@ -75,8 +75,7 @@ class TestCaseHandler:
         self._cursor = 0
 
     def next_test_case(self):
-        # Returns the test case at the current cursor and advances by one.
-        # Returns None when all cases have been consumed.
+
         if self._cursor >= len(self.test_cases):
             return None
         case = self.test_cases[self._cursor]

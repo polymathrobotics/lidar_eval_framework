@@ -14,7 +14,7 @@
 
   "runArgs": ["--net=host", "--ipc=host"],
 
-  // X11 forwarding so GUI apps (e.g. polysetup's Tkinter window) can display on
+  // X11 forwarding so GUI apps (e.g. RViz) can display on
   // the Linux host. Pass through the host DISPLAY and bind-mount the X socket.
   // On the host, allow the container to connect once per session:
   //   xhost +local:
@@ -26,7 +26,7 @@
   ],
 
   // Updated to source Jazzy instead of Humble
-  "postCreateCommand": "grep -qxF 'source /opt/ros/jazzy/setup.bash' ~/.bashrc || echo 'source /opt/ros/jazzy/setup.bash' >> ~/.bashrc; grep -qF 'install/setup.bash' ~/.bashrc || echo '[ -f /lidar_test_bench/install/setup.bash ] && source /lidar_test_bench/install/setup.bash' >> ~/.bashrc",
+  "postCreateCommand": "grep -qxF 'source /opt/ros/jazzy/setup.bash' ~/.bashrc || echo 'source /opt/ros/jazzy/setup.bash' >> ~/.bashrc; grep -qF 'install/setup.bash' ~/.bashrc || echo '[ -f /lidar_test_bench/install/setup.bash ] && source /lidar_test_bench/install/setup.bash' >> ~/.bashrc; pip install -e /lidar_test_bench/polysetup --break-system-packages",
 
   "customizations": {
     "vscode": {

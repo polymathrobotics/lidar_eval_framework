@@ -1,10 +1,13 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc. All rights reserved
-# Proprietary. Any unauthorized copying, distribution, or modification of this software is strictly prohibited.
+# Copyright (c) 2025-present Polymath Robotics, Inc.
+# SPDX-License-Identifier: Apache-2.0
 
 from pathlib import Path
 
 import yaml
 from urdf_parser_py.urdf import Box, Color, Joint, Link, LinkMaterial, Pose, Robot, Visual, Cylinder
+
+from lidar_zones.zones_api import ZoneEngine
+
 
 class URDFGenerator:
 
@@ -12,6 +15,9 @@ class URDFGenerator:
         self.environment_config_dict = environment_config_dict
         self.lidar_config_dict = lidar_config_dict
         self.bench_urdf = Robot(name='lidar_bench')
+        # Each zone's URDF link is built by its geometry plugin (construct_urdf_link),
+        # routed via the same ZoneEngine registry the runtime uses.
+        self._engine = ZoneEngine()
 
         cart_defaults_path = Path(__file__).parent / 'config' / 'cart_defaults.yaml'
         with cart_defaults_path.open('r') as f:
@@ -54,18 +60,31 @@ class URDFGenerator:
         lidar_params = self.lidar_config_dict.get('lidar', {})
         lidar_frame = lidar_params.get('frame')
         joint_rpy = lidar_params.get('joint_rpy_rad')
-        lidar_z_offset_m = lidar_params.get('motor_to_lidar_height_m')
-        lidar_link = self.build_link(name=lidar_frame)
-        lidar_joint = self.build_joint(
+        map_to_motor_height_m = lidar_params.get('map_to_motor_height_m')
+        motor_to_lidar_height_m = lidar_params.get('motor_to_lidar_height_m')
+
+        # map -> motor_axis: vertical lift from the ground to the rotating motor
+        # axis (spins about z). This replaces the old cart chain.
+        self.bench_urdf.add_joint(self.build_joint(
+            name='map_to_motor',
+            parent='map',
+            child='motor_axis',
+            joint_type='continuous',
+            origin_xyz=[0.0, 0.0, map_to_motor_height_m],
+            origin_rpy=[0.0, 0.0, 0.0],
+            axis=[0, 0, 1],
+        ))
+
+        # motor_axis -> lidar: sensor mount offset + orientation.
+        self.bench_urdf.add_link(self.build_link(name=lidar_frame))
+        self.bench_urdf.add_joint(self.build_joint(
             name=f'{lidar_frame}_joint',
             parent='motor_axis',
             child=lidar_frame,
             joint_type='fixed',
-            origin_xyz=[0.0, 0.0, lidar_z_offset_m],
+            origin_xyz=[0.0, 0.0, motor_to_lidar_height_m],
             origin_rpy=joint_rpy,
-        )
-        self.bench_urdf.add_link(lidar_link)
-        self.bench_urdf.add_joint(lidar_joint)
+        ))
 
 
 
@@ -75,44 +94,14 @@ class URDFGenerator:
         zone_joints = self.environment_config_dict.get('zone_joints', {})
         world_placement = self.environment_config_dict.get('world_placement', {})
 
-        # Step 1: build links for all zones
+        # Step 1: build links for all zones — each geometry's link is built by its
+        # plugin. `name` falls back to zone_name when the props omit an explicit
+        # `frame`, matching the plugin's frame→name→default lookup.
         for zone_name in zones:
             props = zone_properties.get(zone_name, {})
             zone_type = props.get('type', 'planar')
-
-            if zone_type == "planar":
-                depth = props.get('depth', 0.0)
-                height = props.get('height', 0.0)
-                length = props.get('length', 0.0)
-                r, g, b = [c / 255.0 for c in props.get('color', [128, 128, 128])]
-                self.bench_urdf.add_link(self.build_link(
-                    name=props.get('frame', zone_name),
-                    geometry=Box(size=[depth, length, height]),
-                    color_rgba=[r, g, b, 1.0],
-                ))
-
-            elif zone_type == "cylindrical":
-                position = props.get('position', 'forward')
-                if position == 'forward':
-                    height = props.get('height', 0.0)
-                    radius = props.get('radius', 0.0)
-                    r, g, b = [c / 255.0 for c in props.get('color', [128, 128, 128])]
-
-                    self.bench_urdf.add_link(self.build_link(
-                        name=props.get('frame', zone_name),
-                        geometry=Cylinder(length=height, radius=radius),
-                        color_rgba=[r, g, b, 0.4],  # 0.4 alpha keeps the zone safely transparent
-                    ))
-                else:
-                    depth = props.get('depth', 0.0)
-                    height = props.get('height', 0.0)
-                    length = props.get('radius', 0.0) * 2.0
-                    r, g, b = [c / 255.0 for c in props.get('color', [128, 128, 128])]
-                    self.bench_urdf.add_link(self.build_link(
-                        name=props.get('frame', zone_name),
-                        geometry=Box(size=[depth, length, height]),
-                        color_rgba=[r, g, b, 1.0],
-                    ))
+            link = self._engine.plugin_for(zone_type).construct_urdf_link({'name': zone_name, **props})
+            self.bench_urdf.add_link(link)
 
         # Step 2: build joint from map to anchor zone
         anchor_zone = world_placement.get('child_zone')

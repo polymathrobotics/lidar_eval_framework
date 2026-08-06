@@ -1,0 +1,7 @@
+pointcloud_filter_node:
+  ros__parameters:
+    lidar_frame: hesai_lidar
+    y_padding:
+      white_wall: 0.101
+    z_padding:
+      white_wall: 0.1

@@ -8,6 +8,9 @@
   <license>TODO: License declaration</license>
 
   <depend>rclpy</depend>
+  <depend>lidar_zones</depend>
+  <depend>lidar_transforms</depend>
+  <depend>lidar_test_bench_interfaces</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

@@ -11,6 +11,7 @@
   <depend>tf2_ros</depend>
   <depend>geometry_msgs</depend>
   <depend>replay_testing</depend>
+  <depend>lidar_eval_backends</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

@@ -10,6 +10,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/config', ['config/pointcloud_filter.yaml']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,6 +25,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'pointcloud_filter_node = lidar_pointcloud_filter.pointcloud_filter_node:main',
         ],
     },
 )

@@ -1,0 +1,36 @@
+[project]
+name = "polysetup"
+version = "0.1.0"
+description = "A CLI tool designed to help configure the framework with the specific information on the lidar, environment, and backend support"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+authors = [{ name = "Aarush Jain", email = "aarush@polymathrobotics.com" }]
+
+dependencies = [
+    "pyyaml",
+]
+
+[project.scripts]
+
+polysetup-ws-sync = "polysetup.cli:main_setup"
+polysetup-bag-recording = "polysetup.cli:bag_recording_setup"
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+
+[tool.uv]
+package = true
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[tool.pytest.ini_options]
+# ROS sources its own pytest plugins (launch_testing/launch_pytest) onto the path;
+# they fail to import here, so disable them for this self-contained suite.
+addopts = "-p no:launch_pytest -p no:launch_testing -p no:launch_ros"

@@ -1,9 +1,7 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc. All rights reserved
-# Proprietary. Any unauthorized copying, distribution, or modification of this software is strictly prohibited.
+# Copyright (c) 2025-present Polymath Robotics, Inc.
+# SPDX-License-Identifier: Apache-2.0
 
 import os
-import re
-import shutil
 import signal
 import subprocess
 import time
@@ -11,14 +9,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import yaml
-from polymath_core_msgs.srv import StartBagRecording, StopBagRecording
 
-
-# bag_recorder names every recording folder like: corp-<host>__<YYYY-MM-DDTHH-MM-SSZ>__<suffix>
-# Filtering on this prefix is the only safe way to pick "the bag just recorded" — using
-# `most recently modified directory in COOP_HANGOUT_BAG/` alone can pick up other bag
-# folders that had their mtime bumped by unrelated cp/restore/edit operations.
-_BAG_NAME_RE = re.compile(r'^corp-.+__\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z__.+$')
+from lidar_automation_manager.tools.session_recorder import SessionRecorder
 
 
 class DriverManager:
@@ -26,6 +18,7 @@ class DriverManager:
     def __init__(self, node):
         self._node = node
         self._proc = None
+        self._recorder = SessionRecorder(node)
 
     def launch_driver(self):
         if self._proc is not None and self._proc.poll() is None:
@@ -115,7 +108,34 @@ class DriverManager:
         return False
 
 
-    def record_bag(self, bag_suffix=''):
+    def _case_dir(self, case=None):
+        """Where a case's bag lives.
+
+        This is the tree LidarBagPlayer walks to recover case identity — it parses
+        `base` / `angles/angle=<n>` / `parameter_configs/<param>/<value>`
+        positionally, so the layout and those literal folder names are load-bearing.
+        """
+        lidar_root = Path(self._node.bag_recorder_directory) / self._node.lidar
+
+        if case is None:
+            return lidar_root / 'base'
+        if 'angle' == case.test_type:
+            return lidar_root / 'angles' / f'angle={int(case.angle)}'
+        return lidar_root / 'parameter_configs' / case.parameter / str(case.value)
+
+
+    def _bag_name(self, case=None):
+        """Bag folder name. Redundant with the case folder above it, but it becomes
+        the zip filename when the bag is uploaded, so keep it readable."""
+        if case is None:
+            return 'base'
+        if 'angle' == case.test_type:
+            sign = 'neg' if case.angle < 0 else ''
+            return f'angle_{sign}{abs(int(case.angle))}'
+        return f'{case.parameter}_{str(case.value).replace(".", "_")}'
+
+
+    def record_bag(self, case=None):
 
         self.launch_driver()
 
@@ -124,39 +144,13 @@ class DriverManager:
                 f'Pointcloud topic {self._node.pointcloud_topic} did not appear; skipping recording')
             return
 
-        request = StartBagRecording.Request()
-        request.bag_suffix = bag_suffix
-        request.include = [self._node.pointcloud_topic]
-        request.record_duration = self._node.bag_recording_duration
-        self._node.start_bag_client.call_async(request)
-        time.sleep(self._node.bag_recording_duration)
-        self._node.stop_bag_client.call_async(StopBagRecording.Request())
-        time.sleep(2)
-
-
-    def move_to_directory(self, case=None):
-        bags_dest = Path(self._node.bag_recorder_directory)
-        lidar_root = bags_dest / self._node.lidar
-
-        # Only consider folders whose names match the bag_recorder's output pattern.
-        # Then pick the most recently modified one — that's the bag just recorded.
-        candidates = [
-            d for d in bags_dest.iterdir()
-            if d.is_dir() and _BAG_NAME_RE.match(d.name)
-        ]
-        if not candidates:
-            return
-        latest = max(candidates, key=lambda p: p.stat().st_mtime)
-
-        if case is None:
-            dest = lidar_root / 'base' / latest.name
-        elif 'angle' == case.test_type:
-            dest = lidar_root / 'angles' / f'angle={int(case.angle)}' / latest.name
-        else:
-            dest = lidar_root / 'parameter_configs' / case.parameter / str(case.value) / latest.name
-
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.move(str(latest), str(dest))
+        # Recorded straight into its final case folder — no post-hoc "find the folder
+        # we just wrote and move it" step to get wrong.
+        self._recorder.record(
+            topics=[self._node.pointcloud_topic],
+            bag_uri=self._case_dir(case) / self._bag_name(case),
+            duration_s=self._node.bag_recording_duration,
+        )
 
 
     def prompt_and_record_gui_params(self, gui_path):
@@ -174,6 +168,5 @@ class DriverManager:
             value = input(f'Enter the value you set for {name}: ').strip()
 
             self.set_driver_config_to_default()
-            self.record_bag(bag_suffix=f'{name}_{value}')
             gui_case = SimpleNamespace(test_type='parameter_gui', parameter=name, value=value)
-            self.move_to_directory(case=gui_case)
+            self.record_bag(gui_case)

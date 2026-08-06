@@ -288,36 +288,31 @@ TODO - Talk about this soon
 # 6. Configuring a run with PolySetup
 
 Once you've written a lidar config and an environment config (sections 3 and 4), **PolySetup** is the
-GUI that ties them together: you point it at the two YAML files, and it generates the bench URDF and
-writes all the downstream config files (ROI regions, the automation manager's computed angles, the
-bringup launch parameters, etc.) so the framework is ready to launch.
+command-line tool that ties them together: you point it at the two YAML files, and it generates the
+bench URDF and writes all the downstream config files (ROI regions, the automation manager's computed
+angles, the bringup launch parameters, etc.) so the framework is ready to launch.
 
-PolySetup is a standalone Tkinter app — it is **not** a ROS node, so you run it directly with Python
-(you'll need a display/X server since it opens a window):
+PolySetup is a standalone CLI — it is **not** a ROS node, so you run it directly with Python. It needs
+the workspace sourced (it imports the built `lidar_zones` package; the devcontainer sources it for you):
 
 ```bash
-cd polysetup
-python3 app.py
+source install/setup.bash            # if your shell isn't already sourced
+python3 polysetup/cli.py \
+    --src-dir /lidar_test_bench \
+    --lidar-file lidar_configs/AT128P.yaml \
+    --env-file environment_configs/rocinante.yaml
 ```
 
-Using it is a three-click flow:
+Arguments:
 
-1. **Environment Config (left panel).** Click **Browse…** and pick your environment YAML from
-   `environment_configs/` (e.g. `rocinante.yaml`). The panel previews the parsed file so you can
-   confirm you grabbed the right one.
-2. **Lidar Config (right panel).** Click **Browse…** and pick your lidar YAML from `lidar_configs/`
-   (e.g. `AT128P.yaml`). It previews that file too.
-3. **Configure Run.** Once *both* files are loaded, the status bar at the bottom turns green and reads
-   something like `Ready: E1R lidar in rocinante environment.`, and the **Configure Run** button
-   enables. Click it to generate the URDF and write out all the downstream config. (Until both files
-   are selected, the button stays disabled and the status bar tells you what's still missing.)
+- `--src-dir` — the workspace root the packages live under. Every generated config path is built from
+  this at runtime, so PolySetup works regardless of where it's invoked from.
+- `--lidar-file` — path to your lidar YAML (section 3).
+- `--env-file` — path to your environment YAML (section 4).
+- `--backend-file` *(optional)* — a backend config file, if your setup needs one.
 
-That's the whole GUI — two file pickers and one button. Everything the framework needs is derived from
-the two YAMLs you selected.
-
-{/* TODO: add screenshots. Drop images under developer_docs/static/img/ and reference them, e.g.:
-     ![PolySetup main window](/img/polysetup_main.png)
-     ![Both configs loaded, ready to configure](/img/polysetup_ready.png) */}
+It loads the two YAMLs, builds the URDF, and writes every downstream config. A missing or malformed
+file fails fast with a clear `[ERROR] …` message instead of a traceback.
 
 After it finishes you can launch the bench:
 

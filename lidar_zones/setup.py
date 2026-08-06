@@ -6,13 +6,17 @@ setup(
     name=package_name,
     version='0.0.0',
     packages=find_packages(exclude=['test']),
-    package_data={'lidar_zones.zones_gen': ['config/*.yaml']},
+    package_data={
+        'lidar_zones.zones_gen': ['config/*.yaml'],
+        # The ZoneEngine loads this next to zone_engine.py at runtime, so it must
+        # be installed inside the package (not just under share/).
+        'lidar_zones.zones_api': ['zones_types_registry.yaml'],
+    },
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/urdf', ['urdf/lidar_bench.urdf']),
-        ('share/' + package_name + '/launch', ['launch/robot_description.launch.py']),
+        ('share/' + package_name + '/config', ['config/roi.yaml', 'config/zones_orchestrator.yaml']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -27,7 +31,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'lidar_bench_tf_broadcaster = lidar_zones.lidar_bench_tf_broadcaster:main',
+            'zones_orchestrator_node = lidar_zones.zones_orchestrator_node:main',
         ],
     },
 )

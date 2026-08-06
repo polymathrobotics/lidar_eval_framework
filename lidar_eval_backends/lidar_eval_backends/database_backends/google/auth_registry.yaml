@@ -1,0 +1,20 @@
+# Credential provider the Google backend uses to fetch its service-account creds.
+# Swap auth = add a provider under auth/ (implementing AuthInterface) and flip `enabled` here.
+# The storage handler never changes.
+#
+# Each row's optional `config` block is handed to that provider on construction, so anything
+# deployment-specific it needs is declared here rather than worked out inside the provider.
+# `~` and $VARS are expanded, so a value can be written portably.
+authentication_registry:
+  - authentication_backend: OnePassword
+    executable: onepassword
+    class: OnePassword
+    enabled: false
+  - authentication_backend: Env
+    executable: env
+    class: Env
+    enabled: true
+    config:
+      # auth.env is gitignored and never installed, so this must point at the source checkout.
+      # $AUTH_ENV_FILE overrides it.
+      env_file: /lidar_test_bench/lidar_eval_backends/auth.env

@@ -1,28 +1,7 @@
 <?xml version="1.0" ?>
 <robot name="lidar_bench" version="1.0">
   <link name="map"/>
-  <link name="cart_base">
-    <visual>
-      <geometry>
-        <box size="0.5 0.5 0.1"/>
-      </geometry>
-      <material name="cart_base_material">
-        <color rgba="0.5 0.5 0.5 1.0"/>
-      </material>
-    </visual>
-  </link>
   <link name="motor_axis"/>
-  <joint name="map_to_cart" type="fixed">
-    <origin xyz="0.0 0.0 0.8406" rpy="0.0 0.0 0.0"/>
-    <parent link="map"/>
-    <child link="cart_base"/>
-  </joint>
-  <joint name="motor_joint" type="continuous">
-    <origin xyz="0.0 0.0 0.1" rpy="0.0 0.0 0.0"/>
-    <axis xyz="0 0 1"/>
-    <parent link="cart_base"/>
-    <child link="motor_axis"/>
-  </joint>
   <link name="white_wall">
     <visual>
       <geometry>
@@ -38,10 +17,16 @@
     <parent link="map"/>
     <child link="white_wall"/>
   </joint>
-  <link name="laser_link"/>
-  <joint name="laser_link_joint" type="fixed">
-    <origin xyz="0.0 0.0 0.1016" rpy="0.0 0.0 -1.5708"/>
+  <joint name="map_to_motor" type="continuous">
+    <origin xyz="0.0 0.0 0.9406" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 0 1"/>
+    <parent link="map"/>
+    <child link="motor_axis"/>
+  </joint>
+  <link name="hesai_lidar"/>
+  <joint name="hesai_lidar_joint" type="fixed">
+    <origin xyz="0.0 0.0 0.09" rpy="0.0 0.0 -1.5708"/>
     <parent link="motor_axis"/>
-    <child link="laser_link"/>
+    <child link="hesai_lidar"/>
   </joint>
 </robot>

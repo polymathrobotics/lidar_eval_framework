@@ -1,13 +1,11 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc. All rights reserved
-# Proprietary. Any unauthorized copying, distribution, or modification of this software is strictly prohibited.
+# Copyright (c) 2025-present Polymath Robotics, Inc.
+# SPDX-License-Identifier: Apache-2.0
 
 import time
-from pathlib import Path
 
 import rclpy
 from rclpy.node import Node
 from rclpy.parameter import Parameter
-from polymath_core_msgs.srv import StartBagRecording, StopBagRecording
 from std_msgs.msg import Int32
 from std_srvs.srv import SetBool, Trigger
 
@@ -30,8 +28,6 @@ class AutomationManagerNode(Node):
         self.declare_parameter('bag_recorder_directory', '')
         self.declare_parameter('bench_initiate_service', '~/lidar_test_bench_initiate')
         self.declare_parameter('start_evaluation_service', '/start_evaluation')
-        self.declare_parameter('start_bag_service', '/session_recorder/start')
-        self.declare_parameter('stop_bag_service', '/session_recorder/stop')
         self.declare_parameter('servo_angle_topic', '/servo_angle')
         self.declare_parameter('bag_recording_duration', 120)
         self.declare_parameter('pointcloud_topic', '')
@@ -46,28 +42,20 @@ class AutomationManagerNode(Node):
         self.bag_recorder_directory = self.get_parameter('bag_recorder_directory').get_parameter_value().string_value
         bench_initiate_service = self.get_parameter('bench_initiate_service').get_parameter_value().string_value
         start_evaluation_service = self.get_parameter('start_evaluation_service').get_parameter_value().string_value
-        start_bag_service = self.get_parameter('start_bag_service').get_parameter_value().string_value
-        stop_bag_service = self.get_parameter('stop_bag_service').get_parameter_value().string_value
         servo_angle_topic = self.get_parameter('servo_angle_topic').get_parameter_value().string_value
         self.bag_recording_duration = self.get_parameter('bag_recording_duration').get_parameter_value().integer_value
         self.pointcloud_topic = self.get_parameter('pointcloud_topic').get_parameter_value().string_value
         self.angles = list(self.get_parameter('angles').get_parameter_value().double_array_value)
         self.parameter_names = list(self.get_parameter('parameter_names').get_parameter_value().string_array_value)
 
-        self.base_dir = ""
-        self.angles_dir = ""
-        self.parameters_dir = ""
         self.defaults = {}
         self._first_angle_seen = False
 
         self._lidar_test_bench_srv = self.create_service(Trigger, bench_initiate_service, self._on_bench_trigger)
         self._start_evaluation_client = self.create_client(SetBool, start_evaluation_service)
-        self.start_bag_client = self.create_client(StartBagRecording, start_bag_service)
-        self.stop_bag_client = self.create_client(StopBagRecording, stop_bag_service)
         self._servo_angle_pub = self.create_publisher(Int32, servo_angle_topic, 10)
 
         self.load_test_cases(self.angles, self.parameter_names)
-        self.create_base_folders()
         self._log_config()
 
 
@@ -82,24 +70,12 @@ class AutomationManagerNode(Node):
         return response
 
 
-    def create_base_folders(self):
-
-        lidar_dir = Path(self.bag_recorder_directory) / self.lidar
-        self.base_dir = lidar_dir / 'base'
-        self.angles_dir = lidar_dir / 'angles'
-        self.parameters_dir = lidar_dir / 'parameter_configs'
-
-        for d in (self.base_dir, self.angles_dir, self.parameters_dir):
-            d.mkdir(parents=True, exist_ok=True)
-
-
     def initiate_testing(self):
 
         self.driver_manager.kill_driver_processes()
         time.sleep(5)
         self.driver_manager.set_driver_config_to_default()
-        self.driver_manager.record_bag(bag_suffix='base')
-        self.driver_manager.move_to_directory()
+        self.driver_manager.record_bag()
 
         while (case := self.test_case_handler.next_test_case()) is not None:
 
@@ -132,14 +108,9 @@ class AutomationManagerNode(Node):
 
         self.set_angle(case)
         self.driver_manager.set_driver_config_to_default()
-        if 'angle' == case.test_type:
-            sign = 'neg' if case.angle < 0 else ''
-            bag_suffix = f'angle_{sign}{abs(int(case.angle))}'
-        else:
+        if 'angle' != case.test_type:
             self.driver_manager.set_driver_param(case)
-            bag_suffix = f'{case.parameter}_{str(case.value).replace(".", "_")}'
-        self.driver_manager.record_bag(bag_suffix=bag_suffix)
-        self.driver_manager.move_to_directory(case)
+        self.driver_manager.record_bag(case)
 
 
     def load_test_cases(self, angles, parameter_names):
