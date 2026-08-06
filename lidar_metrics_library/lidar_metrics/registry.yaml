@@ -1,0 +1,195 @@
+# For a new lidar metric, add an entry under the zone-geometry key whose folder
+# holds the implementation:
+#   planar_zone_metrics      -> lidar_metrics/zone_metrics/planar_zones/<category>_metrics/
+#   cylindrical_zone_metrics -> lidar_metrics/zone_metrics/cylindrical_zones/<category>_metrics/
+# category: spatial    -> zone_metrics/<geometry>_zones/spatial_metrics/
+# category: projective -> zone_metrics/<geometry>_zones/projective_metrics/
+# Set enabled: false to keep a metric registered but skipped.
+#
+# Naming contract (keeps the whole stack convention-driven — no engine edits per
+# new geometry): a zone whose bounds class is "<Geo>ZoneBounds" maps to registry
+# key "<geo>_zone_metrics" and folder "<geo>_zones/". The engine routes each zone
+# to the metric set matching its geometry.
+
+lidar_metrics:
+
+    planar_zone_metrics:
+
+    - name: PointYieldRate
+      description: A metric used to calculate the rate at which LiDAR points are being returned, which can indicate the density of the point cloud and the performance of the LiDAR sensor.
+      executable: point_yield_rate
+      category: spatial
+      return_type: dict[str, float]
+      enabled: false
+
+    - name: RangeDistributionHealth
+      description: A metric used to compute euclidean ranges from the LiDAR origin to each zone for every percentile
+      executable: range_distribution_health
+      category: projective
+      return_type: dict[str, float]
+      enabled: true
+
+    - name: NearestNeighbourSpacing
+      description: A metric that evaluates the spacing between each point and its nearest neighbor in the point
+      executable: nearest_neighbour_spacing
+      category: projective
+      return_type: dict[str, float]
+      enabled: true
+
+    - name: LocalRoughnessKNN
+      description: A metric that assesses the local roughness of a point cloud by analyzing the k-nearest neighbors of each point, providing insights into the surface characteristics and noise levels in the data.
+      executable: local_roughness
+      category: projective
+      return_type: dict[str, float]
+      enabled: true
+
+    - name: LocalGeometryDegeneracy
+      description: A metric that evaluates the local geometry of a point cloud to identify areas of degeneracy, which can indicate regions where the point cloud may have insufficient detail or where the geometry is not well-defined, potentially impacting the accuracy of downstream processing tasks.
+      executable: local_geometry_degeneracy
+      category: projective
+      return_type: dict[str, float]
+      enabled: false
+
+    - name: ZoneIntensityMean
+      description: Per-zone mean and std of intensity values compared against the expected intensity for each material (white, green). Reports the error between measured and expected intensity per zone.
+      executable: zone_intensity_mean
+      category: spatial
+      return_type: dict[str, float]
+      enabled: false
+
+    - name: ZoneSurfaceDepthError
+      description: Per-zone mean, std, and max absolute error between each point's actual X distance from the lidar and the expected depth from TF ground truth. Detects consistent sensor ranging bias.
+      executable: zone_surface_depth_error
+      category: projective
+      return_type: dict[str, float]
+      enabled: true
+
+    - name: SurfaceFitResidual
+      description: Per-zone PCA plane fit RMS residual and X offset of the fitted plane center from the TF-expected surface position. Measures geometric accuracy of the sensor against known flat surfaces.
+      executable: surface_fit_residual
+      category: projective
+      return_type: dict[str, float]
+      enabled: true
+
+    - name: NoiseRegionContamination
+      description: Fraction of total points falling inside known noise regions (whiteboard/wall edge, wall corner). Quantifies multipath and edge diffraction contamination.
+      executable: noise_region_contamination
+      category: spatial
+      return_type: dict[str, float]
+      enabled: false
+
+    - name: PointYieldPerZone
+      description: Point count and yield fraction broken out per zone. Reveals which zone is losing returns rather than reporting a single aggregate yield rate.
+      executable: point_yield_per_zone
+      category: spatial
+      return_type: dict[str, float]
+      enabled: false
+
+    - name: DepthConsistency
+      description: Frame-to-frame stability of zone depth means on a stationary scene. Std approaching zero is the ground truth — any deviation indicates sensor instability between scans.
+      executable: depth_consistency
+      category: projective
+      return_type: dict[str, float]
+      enabled: true
+
+    - name: RangeConsistency
+      description: Frame-to-frame stability of per-zone 3D range means on a stationary scene. Non-zero std indicates ranging instability critical for SLAM and obstacle detection.
+      executable: range_consistency
+      category: projective
+      return_type: dict[str, float]
+      enabled: true
+
+    - name: SpatialDropout
+      description: Detects persistent dead zones in the sensor FOV by gridding each zone's y-z face and tracking which cells never receive a return across all frames.
+      executable: spatial_dropout
+      category: projective
+      return_type: dict[str, float]
+      enabled: true
+
+    - name: AverageSpatialDropout
+      description: Per-frame spatial dropout averaged across all frames. Counts how many frames each grid cell was hit, then reports the mean miss rate across cells per zone. Captures scan-pattern jitter that SpatialDropout misses (cells that flicker on and off).
+      executable: average_spatial_dropout
+      category: projective
+      return_type: dict[str, float]
+      enabled: true
+
+    - name: IntensityUniformity
+      description: Measures spatial uniformity of intensity across each zone using bin CV and linear slope along y. High CV or large slope indicates edge falloff or non-uniform sensor response.
+      executable: intensity_uniformity
+      category: spatial
+      return_type: dict[str, float]
+      enabled: false
+
+    - name: PenetrationDropoutRate
+      description: Measures the dropout rate of points vs the intentend rays that fall in
+      executable: penetration_dropout_rate
+      category: projective
+      return_type: dict[str, float]
+      enabled: false
+
+    - name: AngularPaddingDepthError
+      description: For each zone, pads the azimuth/elevation window by a configured threshold, finds raw-cloud points in the padding ring (excluding any inside another zone's original angular window), and reports the mean absolute X distance from those points to the zone's x_surface as a percent of x_surface.
+      executable: angular_padding_depth_error
+      category: projective
+      return_type: dict[str, float]
+      enabled: false
+
+    - name: PointDensityYieldPerZone
+      description: Point count and yield fraction broken out per zone.
+      executable: point_density_yield_per_zone
+      category: projective
+      return_type: dict[str, float]
+      enabled: false
+
+
+    # COMMENT: Get working for next run over pleae
+
+    - name: PointDensityHeatMapPerZone
+      description: Calculates a distribution of how dense points are per cell per zone given the specific spec of that lidar
+      executable: point_density_heat_map
+      category: projective
+      return_type: dict[str, float]
+      enabled: false
+
+    # COMMENT: Get workign for next run over please please
+
+    - name: PointDensityCoverageOverBag
+      description: Per-zone fraction of the lidar's advertised angular grid (Δθ_h × Δθ_v) that was filled by unique rays across the entire bag. Robust to interlaced scanners that need multiple frames to complete a full pattern.
+      executable: point_density_coverage_over_bag
+      category: projective
+      return_type: dict[str, float]
+      enabled: false
+
+    # COMMENT: Get workign for next run over please please
+
+    - name: PointDensityHeatMapOverBag
+      description: Per-cell unique-ray coverage heat map of the lidar's advertised angular grid, accumulated over every scan in the bag. Sister metric to PointDensityHeatMapPerZone but deduplicates rays across frames so interlaced patterns get credit for their full pattern.
+      executable: point_density_heat_map_over_bag
+      category: projective
+      return_type: dict[str, float]
+      enabled: false
+
+    # Cylindrical-zone metrics. Implementations live in
+    # lidar_metrics/zone_metrics/cylindrical_zones/<category>_metrics/.
+    cylindrical_zone_metrics:
+
+    - name: RaySurfaceRangeError
+      description: Per-cell ray-vs-surface 3D range-error heat map over a cylindrical zone. For each return, intersects its ray from the lidar with the ideal cylinder and reports the 3D distance from the point to that expected surface intersection, gridded into azimuth x height cells, averaged across scans and color-coded (green = on-surface, red = large range error).
+      executable: ray_surface_range_error
+      category: projective
+      return_type: dict
+      enabled: false
+
+    - name: FrustumPointCount
+      description: Counts the projective (frustum-filtered) returns per cylindrical zone, reporting total points, mean points per scan, and scan count.
+      executable: frustum_point_count
+      category: projective
+      return_type: dict[str, float]
+      enabled: true
+
+    - name: SpatialPointCount
+      description: Counts the spatial (bounding-box-filtered) returns per cylindrical zone, reporting total points, mean points per scan, and scan count.
+      executable: spatial_point_count
+      category: spatial
+      return_type: dict[str, float]
+      enabled: true

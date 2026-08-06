@@ -1,0 +1,30 @@
+lidar_metrics_parameters:
+  range_distribution_health:
+    r_min_valid: 0.2
+    r_max_valid: 100.0
+    range_tolerance_m: 0.1
+    number_of_worst_points: 3
+    worst_point_min_separation_m: 0.01
+  nearest_neighbour_spacing:
+    outlier_threshold: 0.2
+  local_roughness_knn:
+    k: 30
+    sample_size: 10000
+  spatial_dropout:
+    cell_size_m: 0.06483684210526316
+    max_dead_cells_reported: 150
+  zone_surface_depth_error:
+    number_of_worst_points: 3
+    worst_point_min_separation_m: 0.01
+  point_density_heat_map:
+    cell_size_m: 0.05
+  point_density_heat_map_over_bag:
+    cell_size_m: 0.05
+  intensity_uniformity:
+    n_bins: 5
+  angular_padding_depth_error:
+    padding_rad: 0.02
+    depth_tolerance_pct: 10
+  ray_surface_range_error:
+    cell_size_m: 0.05
+    step_size_m: 0.02
