@@ -9,7 +9,7 @@ TARGET_STAGE="ros-humble"
 
 # Get the name of your current directory (e.g., "lidar_test_bench")
 DIR_NAME=$(basename "$(pwd)")
-TARGET_MNT="/${DIR_NAME}"
+TARGET_MNT="/workspace/${DIR_NAME}"
 
 echo "========================================="
 echo "🧹 Cleaning up old containers"
@@ -20,8 +20,9 @@ docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
 echo -e "\n========================================="
 echo "🛠️  Building Docker Image (No-Cache): ${IMAGE_NAME}:${IMAGE_TAG}"
 echo "========================================="
-# Added --no-cache to force Docker to completely rebuild your edits
-docker build --no-cache --target "$TARGET_STAGE" -t "${IMAGE_NAME}:${IMAGE_TAG}" .
+# Dockerfile now lives in .devcontainer/ (shared with the VS Code dev container).
+# Build context stays "." so `COPY requirements.txt*` still resolves.
+docker build --target "$TARGET_STAGE" -t "${IMAGE_NAME}:${IMAGE_TAG}" -f .devcontainer/Dockerfile .
 
 echo -e "\n========================================="
 echo "🚀 Launching Container: ${CONTAINER_NAME}"

@@ -1,13 +1,13 @@
 launch:
 - node:
-    pkg: lidar_test_bench
-    exec: lidar_controller
-    name: lidar_controller
+    pkg: lidar_eval_orchestrator
+    exec: eval_framework_manager_node
+    name: eval_framework_manager_node
     output: log
     param:
-    - from: $(find-pkg-share lidar_test_bench)/config/lidar_test_bench.yaml
+    - from: $(find-pkg-share lidar_eval_orchestrator)/config/eval_framework_manager.yaml
 - include:
-    file: $(find-pkg-share lidar_test_bench_bringup)/launch/robot_description.launch.py
+    file: $(find-pkg-share lidar_transforms)/launch/robot_description.launch.py
 - node:
     pkg: lidar_transforms
     exec: lidar_bench_tf_broadcaster
@@ -15,8 +15,8 @@ launch:
     output: log
 - node:
     pkg: lidar_reporting
-    exec: grafana_reporter_node
-    name: grafana_reporter_node
+    exec: metrics_reporting_node
+    name: metrics_reporting_node
     output: screen
     param:
     - from: $(find-pkg-share lidar_reporting)/config/config.yaml
@@ -28,12 +28,19 @@ launch:
     param:
     - from: $(find-pkg-share lidar_reporting)/config/config.yaml
 - node:
-    pkg: lidar_transforms
-    exec: lidar_baseline_node
-    name: lidar_baseline_node
+    pkg: lidar_zones
+    exec: zones_orchestrator_node
+    name: zones_orchestrator_node
     output: log
     param:
-    - from: $(find-pkg-share lidar_transforms)/config/lidar_frame.yaml
+    - from: $(find-pkg-share lidar_zones)/config/zones_orchestrator.yaml
+- node:
+    pkg: lidar_pointcloud_filter
+    exec: pointcloud_filter_node
+    name: pointcloud_filter_node
+    output: log
+    param:
+    - from: $(find-pkg-share lidar_pointcloud_filter)/config/pointcloud_filter.yaml
 # - node:
 #     pkg: arduino_eth_bridge
 #     exec: arduino_eth_bridge_node
@@ -41,11 +48,6 @@ launch:
 #     output: screen
 #     param:
 #     - from: $(find-pkg-share arduino_eth_bridge)/config/arduino_eth_bridge.yaml
-# - include:
-#     file: $(find-pkg-share bag_recorder)/launch/bag_recorder_launch.yaml
-#     arg:
-#     - name: bags_dest
-#       value: /workspaces/polymath_workspace/Pole_Tests
 # - node:
 #     pkg: lidar_automation_manager
 #     exec: automation_manager

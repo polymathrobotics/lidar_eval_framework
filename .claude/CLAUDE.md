@@ -19,7 +19,7 @@ The bench evaluates one **environment** (physical scene with obstacles/zones) ×
 ## End-to-end flow
 
 ```
-polysetup (Tkinter GUI, standalone)
+polysetup (CLI, standalone)
   reads environment_configs/*.yaml + lidar_configs/*.yaml
   └─ builds the bench URDF via lidar_eval_fixture, writes downstream config files
         │
@@ -41,7 +41,7 @@ lidar_controller (lidar_test_bench)  ◄── /start_evaluation (SetBool) start
         • optionally syncs to Notion (DatabaseHandler)
         • calls /report_metrics when a case/run completes
         ▼
-grafana_reporter_node (lidar_reporting)  ◄── /report_metrics (Trigger)
+metrics_reporting_node (lidar_reporting)  ◄── /report_metrics (Trigger)
         • reads report.yaml (MetricsReader), reports to Prometheus/Grafana
         • snapshots viz blocks per case; on final push syncs metrics + viz tab to Google Sheets/Drive
         ▼
@@ -56,8 +56,8 @@ PolyView (polyview_app, Streamlit, standalone)
 | `/start_evaluation`    | `SetBool`       | lidar_controller     | external trigger; `data: true` starts, `false` stops |
 | `/get_profiles`        | `GetProfiles`   | lidar_baseline_node  | lidar_controller |
 | `/roi_filter`          | `FilterCloud`   | lidar_baseline_node  | lidar_controller; returns per-zone spatial **and** projective clouds |
-| `/report_metrics`      | `Trigger`       | grafana_reporter_node| lidar_controller (snapshot per case, final push) |
-| `/visualization`       | `Visualization` | grafana_reporter_node| lidar_baseline_node (client) |
+| `/report_metrics`      | `Trigger`       | metrics_reporting_node| lidar_controller (snapshot per case, final push) |
+| `/visualization`       | `Visualization` | metrics_reporting_node| lidar_baseline_node (client) |
 
 `ros2 service call /start_evaluation std_srvs/srv/SetBool "{data: true}"` kicks off a run.
 
@@ -79,7 +79,7 @@ ROS 2 packages (built with colcon) unless noted "standalone".
 
 - **lidar_metrics_library** — the metrics engine (pure Python, not a ROS node). See its own section.
 
-- **lidar_reporting** — reporting/sinks. Nodes: `grafana_reporter_node` (Prometheus/Grafana +
+- **lidar_reporting** — reporting/sinks. Nodes: `metrics_reporting_node` (Prometheus/Grafana +
   Google Sheets/Drive sync + viz tab) and `visualizer_node`. Tools: `metrics_reader.py` (loads
   report.yaml tree → `{env: {lidar: {case: data}}}`), `lidar_database_handler.py`,
   `google_services_handler.py`, `database_handler.py` (Notion). Vendors a full `polymath_core/`
@@ -106,9 +106,10 @@ ROS 2 packages (built with colcon) unless noted "standalone".
 - **environment_configs/** and **config/** — per-scene definitions (zones, obstacles, world offsets,
   bag dirs/durations) and parameter overrides.
 
-- **polysetup/** — **standalone** Tkinter GUI (`app.py`, `configure_new_run.py`, `polysetup_utils.py`).
-  Run with `python3 app.py`. Selects env + LiDAR config, builds the URDF, writes downstream configs,
-  optionally bootstraps Google Sheets. Not a ROS package.
+- **polysetup/** — **standalone** CLI (`cli.py`, `configure_new_run.py`, `polysetup_utils.py`).
+  Run with `python3 cli.py --src-dir <ws> --lidar-file <yaml> --env-file <yaml>`. Loads env + LiDAR
+  config, builds the URDF, writes downstream configs. Needs the workspace sourced (imports
+  `lidar_zones`). Not a ROS package.
 
 - **polyview_app/** — **standalone** Streamlit app (`src/app.py`, `src/visualization_handler.py`
   [plotly], `src/database_handler.py` [Google Sheets]). Run with `streamlit run src/app.py`. Reads
@@ -181,7 +182,7 @@ Pure-Python plugin engine. Layout under `lidar_metrics/`:
 
 ## Running
 
-- Configure a run: `python3 polysetup/app.py` (pick environment + LiDAR, generate URDF/configs).
+- Configure a run: `python3 polysetup/cli.py --src-dir <ws> --lidar-file <yaml> --env-file <yaml>` (generate URDF/configs).
 - Launch: `ros2 launch lidar_test_bench_bringup lidar_test_bench_launch.yaml`.
 - Start evaluation: `ros2 service call /start_evaluation std_srvs/srv/SetBool "{data: true}"`.
 - View results: `streamlit run polyview_app/src/app.py`.

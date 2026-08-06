@@ -1,4 +1,5 @@
 sensor_msgs/PointCloud2 cloud
+string profiles_json          # serialized BaselineProfiles (as returned by GetProfiles)
 ---
 string[] zone_names
 sensor_msgs/PointCloud2[] spatial_clouds_per_zone

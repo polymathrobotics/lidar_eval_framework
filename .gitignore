@@ -1,5 +1,18 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
 environment_configs/
 lidar_configs/
+results_locations/
 build/
 log/
 install/
+
+# Local Claude Code settings
+.claude/settings.local.json
+lidar_eval_backends/auth.env
+
+# Local toggles written by polysetup-bag-recording (BAG_RECORDING)
+.env

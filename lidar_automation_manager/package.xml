@@ -11,7 +11,8 @@
   <depend>rcl_interfaces</depend>
   <depend>std_srvs</depend>
   <depend>std_msgs</depend>
-  <depend>polymath_core_msgs</depend>
+  <depend>ros2bag</depend>
+  <depend>rosbag2_storage_mcap</depend>
   <depend>python3-yaml</depend>
 
   <test_depend>ament_copyright</test_depend>

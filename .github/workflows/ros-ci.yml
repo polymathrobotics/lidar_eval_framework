@@ -1,0 +1,70 @@
+---
+name: ROS CI
+
+# Runs the ROS 2 test suite (colcon test across all packages). Independent of
+# ros-build.yml: colcon test needs a built workspace, so this builds first, then
+# tests. Runs inside the same ROS 2 Jazzy base image the dev Dockerfile is built on.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: osrf/ros:jazzy-desktop-full
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive   # lidar_metrics_library is a submodule
+
+      - name: Mark workspace safe for git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      # Mirror the Python runtime deps the dev Dockerfile installs, so tests that
+      # import package modules don't fail at import time.
+      - name: Install Python runtime deps
+        run: |
+          pip3 install --no-cache-dir --break-system-packages \
+            urdf-parser-py plotly numpy pyyaml \
+            google-api-python-client google-auth google-auth-oauthlib google-auth-httplib2
+          if [ -f requirements.txt ]; then
+            pip3 install --no-cache-dir --break-system-packages -r requirements.txt
+          fi
+
+      # The committed build/ install/ log/ trees contain package.xml copies;
+      # drop COLCON_IGNORE so colcon/rosdep don't discover them as source.
+      - name: Ignore stale colcon output dirs
+        run: |
+          for d in build install log; do
+            [ -d "$d" ] && touch "$d/COLCON_IGNORE" || true
+          done
+
+      - name: Install dependencies (rosdep)
+        run: |
+          rosdep update
+          # Best-effort: external sensor drivers aren't rosdep-resolvable.
+          rosdep install --from-paths . --ignore-src -r -y || true
+
+      - name: colcon build
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build --event-handlers console_direct+
+
+      - name: colcon test
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
+          colcon test --event-handlers console_direct+ --return-code-on-test-failure
+
+      - name: Test results summary
+        if: always()
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon test-result --verbose

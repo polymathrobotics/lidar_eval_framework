@@ -1,5 +1,5 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc. All rights reserved
-# Proprietary. Any unauthorized copying, distribution, or modification of this software is strictly prohibited.
+# Copyright (c) 2025-present Polymath Robotics, Inc.
+# SPDX-License-Identifier: Apache-2.0
 
 import math
 
@@ -24,14 +24,18 @@ class LidarBenchTFBroadcaster(Node):
     def _publish_joint_state(self, angle_rad: float) -> None:
         js = JointState()
         js.header.stamp = self.get_clock().now().to_msg()
-        js.name = ['motor_joint']
+        # Must match the URDF's rotating joint name (urdf_generator names it
+        # 'map_to_motor'); robot_state_publisher keys joint positions by this name,
+        # so any mismatch means the map->motor_axis->lidar chain is never published
+        # and every 'map -> <lidar>' TF lookup fails.
+        js.name = ['map_to_motor']
         js.position = [angle_rad]
         self._joint_state_pub.publish(js)
 
     def _on_servo_angle(self, msg: Int32) -> None:
         self._current_angle_rad = math.radians(-msg.data)
         self._publish_joint_state(self._current_angle_rad)
-        self.get_logger().info(f'motor_joint updated: {msg.data} deg')
+        self.get_logger().info(f'map_to_motor updated: {msg.data} deg')
 
 
 def main(args=None):

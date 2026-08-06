@@ -1,0 +1,20 @@
+# Lookup table mapping each zone geometry to its plugin.
+#
+# Add a geometry:
+#   1. implement a ZoneTypePlugin subclass in zone_plugins/<executable>.py
+#   2. add a row here
+# The ZoneEngine reads this file and imports each plugin dynamically, so it never
+# needs editing when a geometry is added.
+#
+#   ZoneType   : the YAML `type` string a zone declares (must equal plugin.geometry)
+#   executable : module name under zone_plugins/ (zone_plugins/<executable>.py)
+#   Class      : the ZoneTypePlugin subclass in that module
+
+zone_plugins:
+  - ZoneType: planar
+    executable: planar
+    Class: PlanarZonePlugin
+
+  - ZoneType: cylindrical
+    executable: cylindrical
+    Class: CylindricalZonePlugin

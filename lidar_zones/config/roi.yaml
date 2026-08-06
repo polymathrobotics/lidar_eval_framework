@@ -1,0 +1,11 @@
+zones:
+- name: white_wall
+  frame: white_wall
+  type: planar
+  color: white
+  width: 2.4638
+  z_bounds:
+  - 0.5588
+  - 1.5875
+  y_padding: 0.101
+  z_padding: 0.1

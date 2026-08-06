@@ -1,46 +1,31 @@
-<?xml version="1.0"?>
+<?xml version="1.0" ?>
 <robot name="lidar_bench" version="1.0">
   <link name="map"/>
-  <link name="cart_base">
-    <visual>
-      <geometry>
-        <box size="0.5 0.5 0.1"/>
-      </geometry>
-      <material name="cart_base_material">
-        <color rgba="0.5 0.5 0.5 1.0"/>
-      </material>
-    </visual>
-  </link>
   <link name="motor_axis"/>
-  <joint name="map_to_cart" type="fixed">
-    <origin xyz="0.0 0.0 0.8406" rpy="0.0 0.0 0.0"/>
-    <parent link="map"/>
-    <child link="cart_base"/>
-  </joint>
-  <joint name="motor_joint" type="continuous">
-    <origin xyz="0.0 0.0 0.1" rpy="0.0 0.0 0.0"/>
-    <axis xyz="0 0 1"/>
-    <parent link="cart_base"/>
-    <child link="motor_axis"/>
-  </joint>
-  <link name="black_half_cylinder">
+  <link name="white_wall">
     <visual>
       <geometry>
-        <cylinder radius="0.04826" length="0.127"/>
+        <box size="0.0 2.4638 1.0287"/>
       </geometry>
-      <material name="black_half_cylinder_material">
-        <color rgba="1.0 1.0 1.0 0.4"/>
+      <material name="white_wall_material">
+        <color rgba="1.0 1.0 1.0 1.0"/>
       </material>
     </visual>
   </link>
-  <joint name="map_to_black_half_cylinder" type="fixed">
-    <origin xyz="2.9 0.0 1.1303" rpy="0.0 0.0 0.0"/>
+  <joint name="map_to_white_wall" type="fixed">
+    <origin xyz="4.9276 0.0 1.07315" rpy="0.0 0.0 0.0"/>
     <parent link="map"/>
-    <child link="black_half_cylinder"/>
+    <child link="white_wall"/>
+  </joint>
+  <joint name="map_to_motor" type="continuous">
+    <origin xyz="0.0 0.0 0.9406" rpy="0.0 0.0 0.0"/>
+    <axis xyz="0 0 1"/>
+    <parent link="map"/>
+    <child link="motor_axis"/>
   </joint>
   <link name="hesai_lidar"/>
   <joint name="hesai_lidar_joint" type="fixed">
-    <origin xyz="0.0 0.0 0.09" rpy="0.0 -1.5708 -1.5708"/>
+    <origin xyz="0.0 0.0 0.09" rpy="0.0 0.0 -1.5708"/>
     <parent link="motor_axis"/>
     <child link="hesai_lidar"/>
   </joint>

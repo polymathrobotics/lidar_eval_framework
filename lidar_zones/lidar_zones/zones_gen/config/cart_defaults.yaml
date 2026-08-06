@@ -1,0 +1,10 @@
+# Static base links only. The cart frame is gone: the map -> motor_axis and
+# motor_axis -> lidar joints are built in URDFGenerator.build_lidar_config from
+# the per-lidar config (map_to_motor_height_m, motor_to_lidar_height_m).
+links:
+  map:
+    name: map
+  motor_axis:
+    name: motor_axis
+
+joints: {}

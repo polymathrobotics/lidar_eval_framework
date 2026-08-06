@@ -3,9 +3,19 @@
 <package format="3">
   <name>lidar_transforms</name>
   <version>0.0.0</version>
-  <description>A package for broadcasting lidar_transforms</description>
+  <description>Bench TF infrastructure: URDF placement, robot_state_publisher, the
+    motor-joint TF broadcaster, and the raw transform math shared across the bench.</description>
   <maintainer email="polymath@polymathrobotics.com">Polymath Robotics</maintainer>
   <license>TODO: License declaration</license>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

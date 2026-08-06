@@ -1,0 +1,51 @@
+---
+name: ROS Build
+
+# Builds the dev environment and compiles every ROS 2 package in the workspace.
+# Tests live in ros-ci.yml (a separate, independent workflow).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive   # lidar_metrics_library is a submodule
+
+      # We can't call run_container.sh directly in CI: it uses `docker run -it`
+      # (needs a TTY) and only drops you into an interactive shell. So we
+      # reproduce what it *does* -- build the dev image from the same Dockerfile,
+      # then run the repo mounted inside it -- non-interactively.
+      - name: Build dev environment image
+        run: docker build --target ros-jazzy -t lidar-bench:ci -f .devcontainer/Dockerfile .
+
+      # The committed build/ install/ log/ trees contain package.xml copies;
+      # drop COLCON_IGNORE so colcon/rosdep don't discover them as source.
+      - name: Ignore stale colcon output dirs
+        run: |
+          for d in build install log; do
+            [ -d "$d" ] && touch "$d/COLCON_IGNORE" || true
+          done
+
+      - name: colcon build (all packages)
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}":/workspace/lidar_test_bench \
+            -w /workspace/lidar_test_bench \
+            lidar-bench:ci \
+            bash -c '
+              set -e
+              git config --global --add safe.directory /workspace/lidar_test_bench
+              source /opt/ros/jazzy/setup.bash
+              rosdep update
+              # Best-effort: some deps are external sensor drivers not resolvable
+              # via rosdep. Missing ones surface as build errors below.
+              rosdep install --from-paths . --ignore-src -r -y || true
+              colcon build --event-handlers console_direct+
+            '
