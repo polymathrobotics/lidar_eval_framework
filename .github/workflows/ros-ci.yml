@@ -18,14 +18,20 @@ jobs:
       image: osrf/ros:jazzy-desktop-full
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive   # lidar_metrics_library is a submodule
 
       - name: Mark workspace safe for git
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
+      # The osrf/ros images ship python3 but NOT pip, so this has to come first —
+      # the dev Dockerfile apt-installs python3-pip before its pip3 calls too.
+      - name: Install pip
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3-pip
+
       # Mirror the Python runtime deps the dev Dockerfile installs, so tests that
-      # import package modules don't fail at import time.
+      # import package modules don't fail at import time. Ubuntu 24.04 marks its
+      # Python externally managed (PEP 668), hence --break-system-packages.
       - name: Install Python runtime deps
         run: |
           pip3 install --no-cache-dir --break-system-packages \
@@ -66,5 +72,13 @@ jobs:
         if: always()
         shell: bash
         run: |
+          # `if: always()` means this also runs when an earlier step died before
+          # colcon build. test-result defaults --test-result-base to build/, so
+          # without this guard a missing build/ raises its own exit 2 and buries
+          # the real failure further up the log.
+          if [ ! -d build ]; then
+            echo "No build/ directory — an earlier step failed before colcon build ran."
+            exit 0
+          fi
           source /opt/ros/jazzy/setup.bash
           colcon test-result --verbose

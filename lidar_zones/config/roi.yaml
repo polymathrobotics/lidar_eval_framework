@@ -3,9 +3,9 @@ zones:
   frame: white_wall
   type: planar
   color: white
-  width: 2.4638
+  width: 1.2446
   z_bounds:
-  - 0.5588
-  - 1.5875
+  - 0.24638
+  - 1.61798
   y_padding: 0.101
   z_padding: 0.1

@@ -24,6 +24,7 @@ class AutomationManagerNode(Node):
         self.declare_parameter('ros2_driver', '')
         self.declare_parameter('driver_command', '')
         self.declare_parameter('driver_config_file', '')
+        # '' disables, 'prompt' enables manual entry, any other value is a GUI to launch.
         self.declare_parameter('lidar_gui', '')
         self.declare_parameter('bag_recorder_directory', '')
         self.declare_parameter('bench_initiate_service', '~/lidar_test_bench_initiate')
@@ -32,6 +33,10 @@ class AutomationManagerNode(Node):
         self.declare_parameter('bag_recording_duration', 120)
         self.declare_parameter('pointcloud_topic', '')
         self.declare_parameter('angles', Parameter.Type.DOUBLE_ARRAY)
+        # Set by polysetup-angle-detection. Off by default: an angle sweep is a bag per
+        # angle, so it is opted into. `angles` stays populated either way, so flipping
+        # this back on needs no reconfigure.
+        self.declare_parameter('angle_detection_enabled', False)
         self.declare_parameter('parameter_names', Parameter.Type.STRING_ARRAY)
 
         self.lidar = self.get_parameter('lidar').get_parameter_value().string_value
@@ -46,6 +51,8 @@ class AutomationManagerNode(Node):
         self.bag_recording_duration = self.get_parameter('bag_recording_duration').get_parameter_value().integer_value
         self.pointcloud_topic = self.get_parameter('pointcloud_topic').get_parameter_value().string_value
         self.angles = list(self.get_parameter('angles').get_parameter_value().double_array_value)
+        self.angle_detection_enabled = self.get_parameter(
+            'angle_detection_enabled').get_parameter_value().bool_value
         self.parameter_names = list(self.get_parameter('parameter_names').get_parameter_value().string_array_value)
 
         self.defaults = {}
@@ -115,7 +122,8 @@ class AutomationManagerNode(Node):
 
     def load_test_cases(self, angles, parameter_names):
 
-        self.test_case_handler.load_test_cases(angles, parameter_names)
+        self.test_case_handler.load_test_cases(
+            angles if self.angle_detection_enabled else [], parameter_names)
 
         for name in parameter_names:
             self.defaults[name] = (

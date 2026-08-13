@@ -15,8 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive   # lidar_metrics_library is a submodule
 
       # We can't call run_container.sh directly in CI: it uses `docker run -it`
       # (needs a TTY) and only drops you into an interactive shell. So we

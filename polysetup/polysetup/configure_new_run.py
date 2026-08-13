@@ -47,6 +47,49 @@ class ConfigureNewRun:
             yaml.safe_dump({'zones': roi_zones}, f, sort_keys=False, default_flow_style=False)
 
 
+    @staticmethod
+    def set_angle_detection(src_dir: Path, enabled: bool) -> None:
+        """Write `angle_detection_enabled` into the automation manager's config.
+
+        A standalone toggle rather than part of configure(): it maps onto exactly one ROS
+        parameter with nothing to derive from the lidar or environment files, so it takes
+        effect on the next launch without re-running setup-ws.
+
+        Static so the polysetup-angle-detection entrypoint can call it without building a
+        full ConfigureNewRun, which would demand both config files it has no use for.
+
+        @param src_dir  Workspace source directory the repositories live under.
+        @param enabled  True to sweep the mount through every angle, False for base +
+                        parameter cases only.
+        @throws ValueError  If the config is missing or has no ros__parameters block.
+        """
+        manager_yaml = Path(src_dir) / 'lidar_automation_manager' / 'config' / 'automation_manager.yaml'
+        try:
+            with manager_yaml.open() as f:
+                config = yaml.safe_load(f)
+        except OSError as exc:
+            raise ValueError(f"could not read '{manager_yaml}': {exc}") from exc
+        except yaml.YAMLError as exc:
+            raise ValueError(f"'{manager_yaml}' is not valid YAML: {exc}") from exc
+
+        try:
+            params = config['lidar_automation_manager']['ros__parameters']
+        except (KeyError, TypeError) as exc:
+            raise ValueError(
+                f"'{manager_yaml}' has no lidar_automation_manager/ros__parameters block"
+            ) from exc
+
+        params['angle_detection_enabled'] = bool(enabled)
+
+        try:
+            with manager_yaml.open('w') as f:
+                yaml.safe_dump(config, f, default_flow_style=False)
+        except OSError as exc:
+            raise ValueError(f"could not write '{manager_yaml}': {exc}") from exc
+
+        print(f'  automation_manager.yaml  angle_detection_enabled={str(bool(enabled)).lower()}')
+
+
     def create_base_launch_file(self) -> None:
         """Recreate the bringup launch file with the evaluation node set.
 
@@ -319,7 +362,12 @@ class ConfigureNewRun:
         params['ros2_driver'] = ros2_driver
         params['driver_command'] = driver_command
         params['driver_config_file'] = driver_config_file
-        params['lidar_gui'] = lidar_gui
+        # Coerce to str: a missing key yields None, which is not a valid ROS parameter
+        # value and would fail the node's launch rather than just disabling the prompt.
+        #   lidar_gui: "/path/to/app"  -> launch that GUI, then prompt for what changed
+        #   lidar_gui: "prompt"        -> no GUI to launch, but still prompt
+        #   lidar_gui: "" (or omitted) -> skip the prompt entirely
+        params['lidar_gui'] = lidar_gui if isinstance(lidar_gui, str) else ''
         params['bag_recorder_directory'] = self._base_data_dir + "/" + bag_recorder_directory
         params['bag_recording_duration'] = bag_recording_duration
         params['pointcloud_topic'] = pointcloud_topic

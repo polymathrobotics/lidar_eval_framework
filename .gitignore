@@ -6,6 +6,7 @@ __pycache__/
 environment_configs/
 lidar_configs/
 results_locations/
+lidar_drivers/
 build/
 log/
 install/

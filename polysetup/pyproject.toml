@@ -15,6 +15,7 @@ dependencies = [
 
 polysetup-ws-sync = "polysetup.cli:main_setup"
 polysetup-bag-recording = "polysetup.cli:bag_recording_setup"
+polysetup-angle-detection = "polysetup.cli:angle_detection_setup"
 
 
 [build-system]

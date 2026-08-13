@@ -1,26 +1,27 @@
 lidar_automation_manager:
   ros__parameters:
-    lidar: JT128
-    ros2_driver: hesai_ros_driver
-    driver_command: ros2 run hesai_ros_driver hesai_ros_driver_node --ros-args -p
-      config_path:=/workspaces/polymath_workspace/src/HesaiLidar_ROS_2.0/config/config.yaml
-    driver_config_file: /workspaces/polymath_workspace/src/HesaiLidar_ROS_2.0/config/config.yaml
-    lidar_gui: ''
-    bag_recorder_directory: /lidar_test_bench/results_locations/rosbags/CONFERENCE_ROOM_WHITE_WALL
-    bench_initiate_service: ~/lidar_test_bench_initiate
-    start_evaluation_service: /start_evaluation
-    servo_angle_topic: /servo_angle
-    bag_recording_duration: 20
-    pointcloud_topic: /lidar_points
+    angle_detection_enabled: false
     angles:
-    - 150.0
-    - 75.0
+    - 152.0
+    - 76.0
     - 0.0
-    - -75.0
-    - -150.0
+    - -76.0
+    - -152.0
+    bag_recorder_directory: /lidar_test_bench/results_locations/rosbags/ARCADE_AREA
+    bag_recording_duration: 20
+    bench_initiate_service: ~/lidar_test_bench_initiate
+    driver_command: ros2 run hesai_ros_driver hesai_ros_driver_node --ros-args -p
+      config_path:=/lidar_test_bench/lidar_drivers/HesaiLidar_ROS_2.0/config/config.yaml
+    driver_config_file: /lidar_test_bench/lidar_drivers/HesaiLidar_ROS_2.0/config/config.yaml
+    lidar: JT128
+    lidar_gui: prompt
     parameter_names:
     - frame_frequency
     - echo_mode_filter
+    pointcloud_topic: /lidar_points
+    ros2_driver: hesai_ros_driver
+    servo_angle_topic: /servo_angle
+    start_evaluation_service: /start_evaluation
     frame_frequency:
       type: double
       default: 10.0

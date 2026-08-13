@@ -28,6 +28,11 @@
   // Updated to source Jazzy instead of Humble
   "postCreateCommand": "grep -qxF 'source /opt/ros/jazzy/setup.bash' ~/.bashrc || echo 'source /opt/ros/jazzy/setup.bash' >> ~/.bashrc; grep -qF 'install/setup.bash' ~/.bashrc || echo '[ -f /lidar_test_bench/install/setup.bash ] && source /lidar_test_bench/install/setup.bash' >> ~/.bashrc; pip install -e /lidar_test_bench/polysetup --break-system-packages",
 
+  // Build the bench on every container start. Incremental, so only the first start
+  // (or a start after changed sources) is slow. Sources the underlay explicitly —
+  // this runs non-interactively, so ~/.bashrc is not read.
+  "postStartCommand": "bash -c 'source /opt/ros/jazzy/setup.bash && cd /lidar_test_bench && colcon build --packages-up-to lidar_test_bench_bringup'",
+
   "customizations": {
     "vscode": {
       "extensions": [

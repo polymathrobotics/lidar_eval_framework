@@ -171,6 +171,55 @@ def bag_recording_setup() -> None:
     print(f"  .env  BAG_RECORDING={value}{' (created)' if created else ''}")
 
 
+def angle_detection_setup() -> None:
+    """Parse command-line arguments to enable/disable the angle sweep in the framework
+
+    @return  None.
+    @throws SystemExit  If given flag is not a valid boolean or a spec cannot be resolved.
+    """
+
+    parser = argparse.ArgumentParser(
+        description=textwrap.dedent("""\
+            Polysetup - A helper tool used to enable/disable angle detection in the framework
+
+            When enabled, the automation manager sweeps the mount through every angle
+            computed for the lidar's FOV, recording a case per angle. When disabled
+            (the default) the run is just the base case plus the parameter sweeps.
+
+            Takes in 1 argument:
+
+            angle-detection-status: A boolean value (True/False) to enable or disable the angle sweep.
+            """),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    parser.add_argument(
+        '--angle-detection-status',
+        type=lambda v: v.strip().lower() in ('true', '1', 'yes', 'on'),
+        default=False,
+        help='Enable or disable the angle sweep in the framework (true/false).',
+    )
+
+    parser.add_argument(
+        '--src-dir',
+        type=Path,
+        default=Path.cwd(),
+        help='Workspace source directory the repositories live under (default: current directory).',
+    )
+
+    args = parser.parse_args()
+    src_dir = args.src_dir.resolve()
+    if not src_dir.is_dir():
+        print(f"[ERROR] --src-dir '{src_dir}' is not a directory", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        ConfigureNewRun.set_angle_detection(src_dir, args.angle_detection_status)
+    except ValueError as exc:
+        print(f"[ERROR] {exc}", file=sys.stderr)
+        sys.exit(1)
+
+
 
 if __name__ == '__main__':
     main_setup()

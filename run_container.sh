@@ -3,13 +3,13 @@ set -euo pipefail
 
 # 1. Define configuration variables
 IMAGE_NAME="lidar-framework"
-IMAGE_TAG="humble"
+IMAGE_TAG="jazzy"
 CONTAINER_NAME="my-lidar-bench"
-TARGET_STAGE="ros-humble"
+TARGET_STAGE="ros-jazzy"
 
 # Get the name of your current directory (e.g., "lidar_test_bench")
 DIR_NAME=$(basename "$(pwd)")
-TARGET_MNT="/workspace/${DIR_NAME}"
+TARGET_MNT="/lidar_test_bench"   # must match devcontainer.json + the Dockerfile bashrc overlay line
 
 echo "========================================="
 echo "🧹 Cleaning up old containers"

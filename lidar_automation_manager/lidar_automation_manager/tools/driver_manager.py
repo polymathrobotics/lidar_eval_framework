@@ -153,20 +153,67 @@ class DriverManager:
         )
 
 
+    # Value of `lidar_gui` that means "prompt me, but there is nothing to launch".
+    GUI_PROMPT_ONLY = 'prompt'
+
     def prompt_and_record_gui_params(self, gui_path):
+        """Record one bag per setting the operator changes outside the bench.
+
+        For sensors whose parameters the bench cannot write itself. Driven by `lidar_gui`
+        in the lidar config:
+
+          "/path/to/app"   launch that GUI, then prompt for what was changed
+          "prompt"         nothing to launch, but still prompt — change the setting
+                           however you can (vendor web UI, firmware tool, physical
+                           switch) and report what you did
+          "" or omitted    skip entirely
+
+        A failed launch degrades to the same manual prompt rather than aborting: an
+        unreachable GUI is no reason to lose the cases the operator can still set by
+        hand. Returns the {name: value} pairs recorded.
+        """
+        gui_path = (gui_path or '').strip()
         if not gui_path:
             return {}
 
-        self._node.get_logger().info(f'Launching GUI: {gui_path}')
-        gui_cwd = str(Path(gui_path).parent) or '.'
-        subprocess.Popen([gui_path], start_new_session=True, cwd=gui_cwd)
+        if gui_path.lower() == self.GUI_PROMPT_ONLY:
+            self._node.get_logger().info(
+                'No GUI configured. Change the parameter however you like — web '
+                'interface, vendor tool, firmware update — then enter it below.'
+            )
+        else:
+            try:
+                self._node.get_logger().info(f'Launching GUI: {gui_path}')
+                gui_cwd = str(Path(gui_path).parent) or '.'
+                subprocess.Popen([gui_path], start_new_session=True, cwd=gui_cwd)
+            except OSError as err:
+                self._node.get_logger().warning(
+                    f'Could not launch GUI at {gui_path} ({err}). Change the parameter '
+                    'by some other means, then enter it below.'
+                )
 
+        recorded = {}
         while True:
-            name = input('Change a parameter in the GUI, then enter its name (empty to finish): ').strip()
-            if not name:
+            try:
+                entry = input('Parameter as name=value (empty when done): ').strip()
+            except EOFError:
+                # No interactive stdin (headless launch, output: log). Skip rather than
+                # wedge the whole run on an input() that can never be answered.
+                self._node.get_logger().warning(
+                    'stdin is not interactive; skipping manual parameter capture.')
                 break
-            value = input(f'Enter the value you set for {name}: ').strip()
+
+            if not entry:
+                break
+            name, sep, value = entry.partition('=')
+            name, value = name.strip(), value.strip()
+            if not sep or not name or not value:
+                print('  Expected name=value, e.g. running_mode=3')
+                continue
 
             self.set_driver_config_to_default()
             gui_case = SimpleNamespace(test_type='parameter_gui', parameter=name, value=value)
             self.record_bag(gui_case)
+            recorded[name] = value
+
+        return recorded

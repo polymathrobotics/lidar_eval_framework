@@ -6,7 +6,7 @@ metrics_reporting_node:
     lidar_cost: 1500.0
     lidar_horizontal_fov_deg: 360.0
     lidar_vertical_fov_deg: 95.0
-    bag_directory: /lidar_test_bench/results_locations/rosbags/CONFERENCE_ROOM_WHITE_WALL
+    bag_directory: /lidar_test_bench/results_locations/rosbags/ARCADE_AREA
     database_handler: Google
 visualizer_node:
   ros__parameters:
@@ -14,4 +14,4 @@ visualizer_node:
     frame_id: map
     publish_rate_hz: 1.0
     lidar: JT128
-    environment: white_wall_in_front_of_conference_room
+    environment: arcade_white_wall

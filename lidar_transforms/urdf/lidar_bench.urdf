@@ -5,7 +5,7 @@
   <link name="white_wall">
     <visual>
       <geometry>
-        <box size="0.0 2.4638 1.0287"/>
+        <box size="0.0 1.2446 1.3716"/>
       </geometry>
       <material name="white_wall_material">
         <color rgba="1.0 1.0 1.0 1.0"/>
@@ -13,7 +13,7 @@
     </visual>
   </link>
   <joint name="map_to_white_wall" type="fixed">
-    <origin xyz="4.9276 0.0 1.07315" rpy="0.0 0.0 0.0"/>
+    <origin xyz="4.064 0.0 0.93218" rpy="0.0 0.0 0.0"/>
     <parent link="map"/>
     <child link="white_wall"/>
   </joint>

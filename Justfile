@@ -10,11 +10,20 @@ src_dir := justfile_directory()
 env_config_dir := src_dir / "environment_configs"
 lidar_config_dir := src_dir / "lidar_configs"
 
+# Recipes run in their own non-interactive shell, so ~/.bashrc (where the devcontainer's
+# postCreateCommand puts the source lines) is never read. Source the ROS underlay and — if the
+# workspace has been built — the overlay here, so recipes work from any shell. `set +u` because the
+# ROS setup scripts reference unset variables.
+ros_distro := env_var_or_default("ROS_DISTRO", "jazzy")
+source_ws := "set +u; source /opt/ros/" + ros_distro + "/setup.bash; " + \
+    "[ -f " + src_dir + "/install/setup.bash ] && source " + src_dir + "/install/setup.bash; set -u"
+
 # Recipe to configure the framework workspace
 
 setup-ws environment lidar:
     #!/usr/bin/env bash
     set -euo pipefail
+    {{ source_ws }}
 
     # Resolve a bare config name to exactly one file under the given config tree. Refuses to guess:
     # no match lists what is available, several matches lists the candidates.
@@ -58,14 +67,18 @@ setup-ws environment lidar:
 
     colcon build --packages-up-to lidar_test_bench_bringup
 
-    # Sourcing here would only affect this recipe's subshell, so just remind the caller.
+    # The recipes below source the overlay themselves, but a bare `ros2` in the caller's shell
+    # still needs it — and an already-open shell won't pick up a freshly created install/.
     echo
-    echo "Build complete. In your shell, run:"
+    echo "Build complete. For ad-hoc ros2 commands in this shell, run:"
     echo "    source install/setup.bash"
 
 
 
 launch-bench:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    {{ source_ws }}
     ros2 launch lidar_test_bench_bringup lidar_test_bench_launch.yaml
 
 
@@ -78,6 +91,7 @@ start_evaluation_service := "/start_evaluation"
 start-run:
     #!/usr/bin/env bash
     set -euo pipefail
+    {{ source_ws }}
 
     recording="$(echo "${BAG_RECORDING:-true}" | tr '[:upper:]' '[:lower:]')"
 
@@ -103,20 +117,42 @@ start-run:
 
 # Stop an in-progress evaluation.
 stop-run:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    {{ source_ws }}
     ros2 service call '{{ start_evaluation_service }}' std_srvs/srv/SetBool '{data: false}'
 
 
 
 # Turn bag recording off; the next setup-ws comments the recording chain out of the launch file.
 disable-bag-recording:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    {{ source_ws }}
     polysetup-bag-recording --src-dir '{{ src_dir }}' --bag-recording-status false
 
 # Turn bag recording back on: the next setup-ws leaves the recording chain uncommented.
 enable-bag-recording:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    {{ source_ws }}
     polysetup-bag-recording --src-dir '{{ src_dir }}' --bag-recording-status true
 
 
 
+# Turn the angle sweep off. Off by default — a sweep costs one bag per angle.
+disable-angle-detection:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    {{ source_ws }}
+    polysetup-angle-detection --src-dir '{{ src_dir }}' --angle-detection-status false
+
+# Turn the angle sweep on.
+enable-angle-detection:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    {{ source_ws }}
+    polysetup-angle-detection --src-dir '{{ src_dir }}' --angle-detection-status true
 
 
 
