@@ -6,9 +6,10 @@ name: Deploy Developer Docs
 #
 # Uses the GitHub Pages Actions flow (upload-pages-artifact + deploy-pages) rather than
 # pushing to a gh-pages branch, so no deploy key or PAT is needed — the job's OIDC token
-# is enough. configure-pages runs with `enablement: true`, so it creates the Pages site
-# (source = GitHub Actions) on first run instead of requiring a manual Settings > Pages
-# visit; without it the action fails with "Get Pages site failed ... Not Found".
+# is enough for deploying. But the Pages site itself must exist first, and creating one is
+# an admin-only API that GITHUB_TOKEN cannot call. So this is a one-time manual step:
+#   Settings > Pages > Build and deployment > Source = "GitHub Actions"
+# Until that is done, configure-pages fails with "Get Pages site failed ... Not Found".
 
 on:
   push:
@@ -52,11 +53,10 @@ jobs:
       - name: Build site
         run: npm run build
 
-      # enablement: true creates the Pages site on first run if it doesn't exist yet,
-      # using the repo's `pages: write` permission above. Idempotent afterwards.
+      # No `enablement: true` here: creating a Pages site needs repo-admin rights, which
+      # GITHUB_TOKEN lacks even with `pages: write` ("Resource not accessible by
+      # integration"). The site must be enabled once in the UI — see the header comment.
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
