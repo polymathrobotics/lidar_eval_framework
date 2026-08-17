@@ -1,6 +1,3 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc.
-# SPDX-License-Identifier: Apache-2.0
-
 """The zone engine — routes zones to their geometry plugin.
 
 `ZoneEngine` is the single entry point consumers use (zones node, filter,

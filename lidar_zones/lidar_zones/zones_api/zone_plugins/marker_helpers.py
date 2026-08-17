@@ -1,6 +1,3 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc.
-# SPDX-License-Identifier: Apache-2.0
-
 """RViz marker primitives shared by the geometry plugins' `build_markers`.
 
 This module is ROS-dependent (visualization_msgs / std_msgs). Plugins import it

@@ -1,6 +1,3 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc.
-# SPDX-License-Identifier: Apache-2.0
-
 from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory

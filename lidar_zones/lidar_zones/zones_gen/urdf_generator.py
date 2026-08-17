@@ -1,6 +1,3 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc.
-# SPDX-License-Identifier: Apache-2.0
-
 from pathlib import Path
 
 import yaml
@@ -18,10 +15,6 @@ class URDFGenerator:
         # Each zone's URDF link is built by its geometry plugin (construct_urdf_link),
         # routed via the same ZoneEngine registry the runtime uses.
         self._engine = ZoneEngine()
-
-        cart_defaults_path = Path(__file__).parent / 'config' / 'cart_defaults.yaml'
-        with cart_defaults_path.open('r') as f:
-            self._cart_defaults = yaml.safe_load(f)
 
     def build_harness(self, output_urdf_path: Path) -> None:
         self.build_base_environment()

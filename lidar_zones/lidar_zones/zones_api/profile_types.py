@@ -1,5 +1,3 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc.
-# SPDX-License-Identifier: Apache-2.0
 
 """Shared zone/profile data vocabulary.
 
@@ -15,11 +13,6 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-
-# the bottom should be moved zones engine or something
-
-# Maps a zone's geometry (the YAML `type` field) to the surface-noise model used
-# to derive ZoneConfig.noise_sigma_m. Each plugin's geometry key appears here.
 GEOMETRY_SURFACE: dict[str, str] = {
     'planar': 'planar',
     'cylindrical': 'curved',

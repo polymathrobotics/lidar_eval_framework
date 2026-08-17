@@ -1,6 +1,3 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc.
-# SPDX-License-Identifier: Apache-2.0
-
 """The zone-plugin contract.
 
 One `ZoneTypePlugin` subclass per zone geometry is the *single* place that
