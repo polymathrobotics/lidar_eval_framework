@@ -3,31 +3,32 @@
 
 """High-level tests for the ZoneEngine — plugin discovery, routing, serialization."""
 
-import numpy as np
-import pytest
-
 from lidar_zones.zones_api import ZoneEngine
 from lidar_zones.zones_api.profile_types import BaselineProfiles, FramePose, ROIConfig, ZoneConfig
 from lidar_zones.zones_api.zone_plugins.cylindrical import CylindricalZonePlugin
 from lidar_zones.zones_api.zone_plugins.planar import PlanarZonePlugin
+import numpy as np
+import pytest
 
 
 def pose(x=0.0, y=0.0, z=0.0):
-    """A FramePose at (x, y, z) with identity rotation."""
+    """Build a FramePose at (x, y, z) with identity rotation."""
     return FramePose(position=np.array([x, y, z], dtype=float), rotation=np.eye(3))
 
 
 def planar_zone(name='wall', width=2.0):
-    """A ZoneConfig carrying a PlanarZoneType."""
+    """Build a ZoneConfig carrying a PlanarZoneType."""
     return ZoneConfig(
         name=name, frame=f'{name}_frame', color='white',
         expected_intensity=220.0, noise_sigma_m=0.002,
-        zone_type=PlanarZonePlugin.PlanarZoneType(z_bounds=(0.0, 1.0), width=width, y_padding=0.05),
+        zone_type=PlanarZonePlugin.PlanarZoneType(
+            z_bounds=(0.0, 1.0), width=width, y_padding=0.05,
+        ),
     )
 
 
 def cylindrical_zone(name='post'):
-    """A ZoneConfig carrying a CylindricalZoneType."""
+    """Build a ZoneConfig carrying a CylindricalZoneType."""
     return ZoneConfig(
         name=name, frame=f'{name}_frame', color='grey',
         expected_intensity=120.0, noise_sigma_m=0.005,
@@ -39,7 +40,7 @@ def cylindrical_zone(name='post'):
 
 @pytest.fixture
 def engine():
-    """A ZoneEngine loaded from the shipped zones_types_registry.yaml."""
+    """Build a ZoneEngine loaded from the shipped zones_types_registry.yaml."""
     return ZoneEngine()
 
 

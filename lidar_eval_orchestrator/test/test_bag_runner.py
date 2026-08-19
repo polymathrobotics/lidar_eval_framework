@@ -1,7 +1,8 @@
 # Copyright (c) 2025-present Polymath Robotics, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-"""High-level tests for LidarBagPlayer — how a bag tree becomes an ordered play queue.
+"""
+High-level tests for LidarBagPlayer — how a bag tree becomes an ordered play queue.
 
 Playback itself shells out to `ros2 bag play`, so these cover the queue building
 and the report-path derivation, not the subprocess.
@@ -9,9 +10,8 @@ and the report-path derivation, not the subprocess.
 
 from pathlib import Path
 
-import pytest
-
 from lidar_eval_orchestrator.tools.bag_runner import LidarBagPlayer
+import pytest
 
 
 def touch_bag(root, relative_path):

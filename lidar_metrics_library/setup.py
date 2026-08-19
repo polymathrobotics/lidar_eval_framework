@@ -20,4 +20,12 @@ setup(
     maintainer_email='aarush@polymathrobotics.com',
     description='Lidar metrics evaluation library for comparing sensor performance on the lidar test bench.',
     license='Apache-2.0',
+    # colcon picks its pytest runner only for packages that declare a 'test' extra on pytest.
+    # Without this it falls back to the setuptools/unittest runner, which collects nothing here
+    # and exits 5 ("NO TESTS RAN"), failing the package.
+    extras_require={
+        'test': [
+            'pytest',
+        ],
+    },
 )

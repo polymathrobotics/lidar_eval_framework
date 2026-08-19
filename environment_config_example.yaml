@@ -1,0 +1,44 @@
+name: Example_Env
+
+bag_recorder_directory: 'Example_Env' 
+bag_recording_duration: 10                                               
+
+zones:
+    - "example_zone_1"
+    - "example_zone_2"
+
+zone_properties:
+
+    example_zone_1:
+        frame: "example_zone_1"
+        type: "planar" 
+        color: [255, 255, 255] 
+        height: 1.27 # used for zone profiles
+        length: 1.27 # used for zone profiles
+        z_offset: 0.254
+        y_padding: 0.1016
+        z_padding: 0.1016
+
+    example_zone_2:
+        frame: "example_zone_2"
+        type: "planar" # used for zone profiles
+        color: [0, 128, 202] # used for zone profiles
+        height: 0.6604 # used for zone profiles
+        length: 0.4572
+        z_offset: 0.0762
+        y_padding: 0.4572
+        z_padding: 0.4572
+
+
+zone_joints:
+  example_zone_1:
+    left_zone:
+      zone: example_zone_2
+      x_offset: -0.1524
+      y_offset: 0.127
+
+## want to eventually remove the bottom and configure via the app somehow
+world_placement:
+    child_zone: "example_zone_1"
+    x_offset: 3.81
+    y_offset: 0.0

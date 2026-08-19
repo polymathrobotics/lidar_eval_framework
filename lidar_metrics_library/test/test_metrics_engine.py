@@ -1,7 +1,8 @@
 # Copyright (c) 2025-present Polymath Robotics, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-"""High-level tests for LidarMetricsEngine — geometry routing and report shape.
+"""
+High-level tests for LidarMetricsEngine — geometry routing and report shape.
 
 Metric plugins are faked so these stay independent of any individual metric's
 math; what's under test is the engine's routing and the report.yaml it produces.
@@ -9,11 +10,10 @@ math; what's under test is the engine's routing and the report.yaml it produces.
 
 from dataclasses import dataclass, field
 
+from lidar_metrics.engine import LidarMetricsEngine
 import numpy as np
 import pytest
 import yaml
-
-from lidar_metrics.engine import LidarMetricsEngine
 
 
 # Bounds stand-ins. The engine derives a zone's geometry from its bounds class
@@ -57,7 +57,8 @@ class FakePlugin:
 
 @pytest.fixture
 def engine(tmp_path):
-    """An engine writing into a temp results root, with profiles wired in directly.
+    """
+    Build an engine writing into a temp results root, with profiles wired in directly.
 
     `_profiles` is set rather than calling set_base() on purpose: set_base() runs
     the params-override pass, which rewrites the package's tracked config.yaml.

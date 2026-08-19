@@ -1,16 +1,16 @@
 # Copyright (c) 2025-present Polymath Robotics, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-"""High-level tests for LidarDatabaseHandler — backend selection and delegation.
+"""
+High-level tests for LidarDatabaseHandler — backend selection and delegation.
 
 No real backend is contacted: these cover which backend the registry selects and
 how the handler behaves with and without one.
 """
 
+from lidar_eval_backends.lidar_database_handler import LidarDatabaseHandler
 import pytest
 import yaml
-
-from lidar_eval_backends.lidar_database_handler import LidarDatabaseHandler
 
 
 class StubBackend:

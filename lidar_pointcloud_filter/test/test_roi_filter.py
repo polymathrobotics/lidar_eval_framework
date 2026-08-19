@@ -3,16 +3,15 @@
 
 """High-level tests for ROIFilter — decode, spatial vs projective masking, packing."""
 
-import numpy as np
-import pytest
 from geometry_msgs.msg import TransformStamped
-from sensor_msgs.msg import PointCloud2, PointField
-from sensor_msgs_py import point_cloud2
-from std_msgs.msg import Header
-
 from lidar_pointcloud_filter.tools.roi_filter import ROIFilter
 from lidar_zones.zones_api.profile_types import BaselineProfiles, FramePose, ZoneConfig
 from lidar_zones.zones_api.zone_plugins.planar import PlanarZonePlugin
+import numpy as np
+import pytest
+from sensor_msgs.msg import PointCloud2, PointField
+from sensor_msgs_py import point_cloud2
+from std_msgs.msg import Header
 
 
 class StubTfBuffer:
@@ -29,7 +28,7 @@ class StubTfBuffer:
 
 
 def identity_transform():
-    """A sensor->map TransformStamped with no translation or rotation."""
+    """Build a sensor->map TransformStamped with no translation or rotation."""
     tf = TransformStamped()
     tf.transform.rotation.w = 1.0
     return tf

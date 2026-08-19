@@ -5,10 +5,9 @@
 
 import os
 
+from lidar_reporting.tools.data_reader import DataReader
 import pytest
 import yaml
-
-from lidar_reporting.tools.data_reader import DataReader
 
 
 def write_report(root, relative_path, data=None):
@@ -30,7 +29,7 @@ def touch_bag(root, relative_path):
 
 @pytest.fixture
 def results_dir(tmp_path):
-    """A metrics tree covering all three case layouts the bench produces."""
+    """Build a metrics tree covering all three case layouts the bench produces."""
     root = tmp_path / 'metrics_results'
     write_report(root, 'E1/at128/base/report.yaml')
     write_report(root, 'E1/at128/angles/angle=15_report.yaml')

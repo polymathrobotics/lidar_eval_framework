@@ -3,9 +3,6 @@
 
 """High-level tests for TestCaseHandler — turning declared sweeps into test cases."""
 
-import pytest
-from rclpy.parameter import Parameter
-
 # Aliased: pytest would otherwise try to collect the Test*-prefixed class.
 from lidar_automation_manager.tools.test_case_handler import TestCaseHandler as CaseHandler
 from lidar_automation_manager.tools.utils import (
@@ -13,6 +10,8 @@ from lidar_automation_manager.tools.utils import (
     ParameterBooleanTestCase,
     ParameterNumericalTestCase,
 )
+import pytest
+from rclpy.parameter import Parameter
 
 
 class StubNode:
