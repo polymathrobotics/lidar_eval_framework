@@ -1,7 +1,3 @@
-# lidar_eval_orchestrator/tools/bag_runner.py
-
-# debating if i should move this to lidar automation manager
-
 import os
 import threading
 import subprocess

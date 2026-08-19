@@ -1,6 +1,3 @@
-# Copyright (c) 2026-present Polymath Robotics, Inc.
-# SPDX-License-Identifier: Apache-2.0
-
 import importlib
 from importlib import resources
 from pathlib import Path
@@ -30,9 +27,7 @@ class LidarDatabaseHandler:
         return self._database_handler is not None and self._database_handler.available
 
     def authenticate(self) -> None:
-        # Delegate to the backend: it knows how to obtain its own credentials (Google fetches a
-        # service-account key from 1Password). The read path injects credentials at construction
-        # instead and never calls this.
+
         if self._database_handler is None:
             self.authenticated = False
             raise RuntimeError("No database backend configured.")

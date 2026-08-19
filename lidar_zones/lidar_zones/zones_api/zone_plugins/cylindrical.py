@@ -1,6 +1,3 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc.
-# SPDX-License-Identifier: Apache-2.0
-
 """Cylindrical zone geometry plugin — everything about a cylindrical ROI zone.
 
 The geometry's data structs (ZoneType + ZoneBounds) are nested inside the plugin

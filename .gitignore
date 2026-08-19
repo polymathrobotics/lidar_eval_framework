@@ -13,7 +13,10 @@ install/
 
 # Local Claude Code settings
 .claude/settings.local.json
+
+# Lidar eval backends
 lidar_eval_backends/auth.env
+lidar_eval_backends/lidar_eval_backends.egg-info
 
 # Local toggles written by polysetup-bag-recording (BAG_RECORDING)
 .env

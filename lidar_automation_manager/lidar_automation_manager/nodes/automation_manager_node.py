@@ -1,6 +1,3 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc.
-# SPDX-License-Identifier: Apache-2.0
-
 import time
 
 import rclpy
@@ -50,10 +47,10 @@ class AutomationManagerNode(Node):
         servo_angle_topic = self.get_parameter('servo_angle_topic').get_parameter_value().string_value
         self.bag_recording_duration = self.get_parameter('bag_recording_duration').get_parameter_value().integer_value
         self.pointcloud_topic = self.get_parameter('pointcloud_topic').get_parameter_value().string_value
-        self.angles = list(self.get_parameter('angles').get_parameter_value().double_array_value)
+        self.angles = self._array_parameter('angles')
         self.angle_detection_enabled = self.get_parameter(
             'angle_detection_enabled').get_parameter_value().bool_value
-        self.parameter_names = list(self.get_parameter('parameter_names').get_parameter_value().string_array_value)
+        self.parameter_names = self._array_parameter('parameter_names')
 
         self.defaults = {}
         self._first_angle_seen = False
@@ -64,6 +61,14 @@ class AutomationManagerNode(Node):
 
         self.load_test_cases(self.angles, self.parameter_names)
         self._log_config()
+
+
+    def _array_parameter(self, name: str) -> list:
+        # A params file cannot type an empty sequence, so a run with no sweep (`angles: []`,
+        # `parameter_names: []`) leaves the declared parameter uninitialized rather than
+        # holding an empty array. Both mean "nothing to sweep", so read through
+        # get_parameter_or, which yields an unset Parameter instead of raising.
+        return list(self.get_parameter_or(name).value or [])
 
 
     def _on_bench_trigger(self, request, response):

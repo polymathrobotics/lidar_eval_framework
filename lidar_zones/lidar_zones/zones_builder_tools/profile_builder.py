@@ -14,10 +14,7 @@ from lidar_zones.zones_api.profile_types import (  # noqa: F401  (FramePose/Zone
 )
 from lidar_zones.zones_api.zone_plugins.planar import PlanarZonePlugin
 
-# Planar's structs are nested in its plugin; alias them to local names for the
-# planar-only deferred-width resolution below (planar zones may omit an explicit
-# width, so their y-bounds are inferred from neighbors — a cross-zone step no
-# single-zone plugin can own).
+
 PlanarZoneType = PlanarZonePlugin.PlanarZoneType
 PlanarZoneBounds = PlanarZonePlugin.PlanarZoneBounds
 

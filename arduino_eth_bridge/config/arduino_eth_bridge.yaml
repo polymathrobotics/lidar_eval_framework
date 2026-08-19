@@ -1,5 +1,0 @@
-arduino_eth_bridge:
-  ros__parameters:
-    arduino_ip: "192.168.1.177"
-    arduino_port: 5000
-    command_topic: "/servo_angle"
