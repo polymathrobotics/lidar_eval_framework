@@ -1,9 +1,18 @@
 import math
+import sys
 from pathlib import Path
 
 import streamlit as st
 import yaml
-from lidar_eval_backends.lidar_database_handler import LidarDatabaseHandler
+
+# lidar_eval_backends is a sibling ROS package in this repo, not a PyPI dependency. Running
+# locally, the sourced colcon overlay puts it on the path; on Streamlit Community Cloud there is
+# no overlay, only the bare git checkout — so point at the package's source directory directly.
+_BACKENDS_SRC = Path(__file__).resolve().parents[2] / 'lidar_eval_backends'
+if _BACKENDS_SRC.is_dir() and str(_BACKENDS_SRC) not in sys.path:
+    sys.path.insert(0, str(_BACKENDS_SRC))
+
+from lidar_eval_backends.lidar_database_handler import LidarDatabaseHandler  # noqa: E402
 import visualization_handler
 import time
 

@@ -40,30 +40,65 @@ To push your lidar data, metrics, and visualization snapshots to a database, you
 **before** you launch the main framework — otherwise the reporting node will come up unauthenticated
 and silently skip the sync.
 
-At Polymath, credentials live in **1Password**, and the default backend
-(`GoogleServicesHandler`, in
+The default backend (`GoogleServicesHandler`, in
 [lidar_eval_backends/.../google_services_handler.py](../../lidar_eval_backends/lidar_eval_backends/database_backends/google/google_services_handler.py))
-pulls a Google service-account JSON dynamically at runtime:
+needs a Google service-account key plus the Drive folder to write into. Out of the box it reads them
+from a plain `KEY=VALUE` env file, so set yours up once:
 
-1. It looks for a live `OP_SESSION_*` token in your environment; if none is valid it runs
-   `op signin --raw` and prompts you to unlock 1Password.
-2. It reads the service-account credentials attached to the 1Password item titled
-   **"Lidar Evaluation Results Database"** and uses them to talk to Google Drive/Sheets.
+1. Look at [lidar_eval_backends/auth.env.example](../../lidar_eval_backends/auth.env.example) — it
+   lists every field the backend expects: the service-account JSON fields verbatim, plus your Drive
+   `root_folder_id`.
+2. Grab your own Google Cloud service-account details from **1Password** and fill them into your own
+   copy of that file. Escape the newlines in `private_key` as `\n`.
+3. Save your copy as `lidar_eval_backends/auth.env` and keep it there. It's gitignored and never
+   installed into `install/`, so your credentials stay out of the repo and off the overlay.
 
-So in practice you just need the 1Password CLI (`op`) installed and be signed into the
-`polymathrobotics` account before launching.
+That's the whole setup — the `Env` provider is enabled by default, so your next launch picks the file
+up with no further changes. To keep it somewhere else, set `$AUTH_ENV_FILE` or edit `env_file` on the
+`Env` row in
+[google/auth_registry.yaml](../../lidar_eval_backends/lidar_eval_backends/database_backends/google/auth_registry.yaml).
+A wrong `$AUTH_ENV_FILE` fails loudly rather than quietly falling back to the configured path.
 
-**Using your own store / your own backend.** You are not tied to 1Password or Google. A backend is
-just a class that implements an `authenticate()` method (and the `sync()` interface). To wire up your
-own:
+:::note If you're at Polymath, enable 1Password instead
 
-1. Add a new handler under `lidar_reporting/lidar_reporting/tools/database_backends/` implementing
-   `authenticate()` — fetch your credentials from wherever you keep them (env var, vault, file, etc.).
-2. Register it in
-   [lidar_eval_backends/lidar_eval_backends/database_registry.yaml](../../lidar_eval_backends/lidar_eval_backends/database_registry.yaml)
-   with its `class`, `executable` (module name), and `enabled: true`. The
-   `LidarDatabaseHandler` loads the **first enabled** backend from that registry, so make sure only
-   the one you want is enabled.
+Don't keep an `auth.env` on disk at all. In
+[google/auth_registry.yaml](../../lidar_eval_backends/lidar_eval_backends/database_backends/google/auth_registry.yaml)
+flip the two providers:
+
+```yaml
+authentication_registry:
+  - authentication_backend: OnePassword
+    enabled: true      # was false
+  - authentication_backend: Env
+    enabled: false     # was true
+```
+
+Then **run `op signin` every time before you launch the framework**. With a live session the
+`OnePassword` provider pulls the service-account key and `root_folder_id` straight out of Core for you
+— the shared **"Lidar Evaluation Results Database"** item in the `Employee` vault — so there are no
+credentials on your disk. If it finds no live `OP_SESSION_*` token it runs `op signin` itself and
+prompts you to unlock, which needs a TTY; sign in up front when you're launching from a script.
+:::
+
+## Using your own store / your own backend
+
+You are not tied to 1Password or Google. Credentials and storage are separate plugin points, so pick
+the one that matches what you're swapping:
+
+- **Same database, different secret store** — write a credential provider. Add a class implementing
+  [`AuthInterface`](../../lidar_eval_backends/lidar_eval_backends/authentication_interface.py) under
+  `lidar_eval_backends/lidar_eval_backends/database_backends/google/auth/`, returning the same blob
+  shape the Google backend expects, and enable it in that backend's `auth_registry.yaml` (disabling
+  the others). Its `config:` block is handed to your provider on construction, so declare any paths
+  or item references there rather than deriving them in code. The storage handler never changes.
+- **A different database entirely** — write a storage backend. Add a class implementing
+  [`DatabaseInterface`](../../lidar_eval_backends/lidar_eval_backends/database_interface.py)
+  (`authenticate()`, `load_credentials()`, `sync()`, and the read half PolyView uses) under
+  `lidar_eval_backends/lidar_eval_backends/database_backends/`, then register it in
+  [database_registry.yaml](../../lidar_eval_backends/lidar_eval_backends/database_registry.yaml)
+  with its `class`, `executable` (module path), and `enabled: true`.
+
+Both registries load the **first enabled** row, so make sure only the one you want is enabled.
 
 ---
 
@@ -354,14 +389,28 @@ running on your machine), deploy it on **Streamlit Community Cloud**:
    GitHub repo you own, so it needs to live under your account). Push the `polyview_app` code there if
    it isn't already on GitHub.
 3. **Create the app.** In Streamlit Cloud click **New app**, select your forked repo, pick the branch,
-   and set the **main file path** to `src/app.py` (and the app's working directory to `polyview_app`
-   if the repo root contains more than just the app).
+   and set the **main file path** to the app's full path from the repo root —
+   `polyview_app/src/app.py`. There is no "working directory" setting, so the path has to be complete.
 4. **Add your secrets.** In the app's **Advanced settings → Secrets**, paste the same contents as your
    local `.streamlit/secrets.toml` (the `root_folder_id` and the `[google_sheets]` service-account
    block). Never commit `secrets.toml` to the repo — Streamlit stores these securely instead.
 5. **Deploy.** Streamlit builds the app (installing `requirements.txt`) and gives you a public
    `*.streamlit.app` URL. Share that link — anyone in your organization can open it to view the lidar
    evaluation data, no local setup required.
+
+:::warning `requirements.txt` has to sit next to `app.py`
+
+Streamlit Community Cloud looks for a dependency file in exactly two places: the **repository root**
+or the **same directory as the entrypoint file**. Intermediate directories are ignored silently — no
+warning, no build error. That's why the file lives at `polyview_app/src/requirements.txt` rather than
+`polyview_app/requirements.txt`; moving it up a level makes the deploy fail at the first
+non-Streamlit import (`ModuleNotFoundError: yaml`) with nothing in the build log to explain it.
+
+The same rule bites `.streamlit/config.toml`: the theme in `polyview_app/.streamlit/` applies when
+you run locally from that directory, but Cloud resolves it against the repo root, so the deployed app
+falls back to the default theme. Set the theme under **Advanced settings** instead, or duplicate the
+file at the repo root.
+:::
 
 > Because the app is public, make sure the service account you point it at only has access to the
 > Drive data you actually intend to share.

@@ -42,18 +42,9 @@ launch:
     param:
     - from: $(find-pkg-share lidar_pointcloud_filter)/config/pointcloud_filter.yaml
 # - node:
-#     pkg: arduino_eth_bridge
-#     exec: arduino_eth_bridge_node
-#     name: arduino_eth_bridge_node
-#     output: screen
-#     param:
-#     - from: $(find-pkg-share arduino_eth_bridge)/config/arduino_eth_bridge.yaml
-# - node:
 #     pkg: lidar_automation_manager
 #     exec: automation_manager
 #     name: lidar_automation_manager
 #     output: screen
 #     param:
 #     - from: $(find-pkg-share lidar_automation_manager)/config/automation_manager.yaml
-- include:
-    file: $(find-pkg-share foxglove_bridge)/launch/foxglove_bridge_launch.xml

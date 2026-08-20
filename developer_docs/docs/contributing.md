@@ -11,7 +11,16 @@ We welcome pull requests! To keep the deployment and integration pipelines clean
 
 # Developers: How to contribute to the framework
 
-In terms of contributing to the core framework, there are many different ways a dev can really help out which are listed as follows:
+Almost everything in the bench is a plugin sitting behind a registry, so the common contributions
+don't touch any engine code — you add a file and add a row. Pick the one that matches what you're
+building:
+
+| You want to add… | Where the file goes | What to register it in |
+|---|---|---|
+| a **metric** ([§1](#1-contributing-to-lidar_metrics_library)) | `lidar_metrics/zone_metrics/<geo>_zones/<category>_metrics/` | [`registry.yaml`](../../lidar_metrics_library/lidar_metrics/registry.yaml) |
+| a **metric parameter that follows the scene** ([§1](#1-contributing-to-lidar_metrics_library)) | `lidar_metrics/metric_params_overrides/` | nothing — found by filename |
+| a **zone geometry** ([§2](#2-adding-a-new-zone-geometry)) | `lidar_zones/zones_api/zone_plugins/` | [`zones_types_registry.yaml`](../../lidar_zones/lidar_zones/zones_api/zones_types_registry.yaml) |
+| a **database** or **credential store** ([§3](#3-adding-a-database-backend-or-credential-provider)) | `lidar_eval_backends/database_backends/` | `database_registry.yaml` / `auth_registry.yaml` |
 
 **Legend**
 
@@ -106,9 +115,14 @@ What you get to work with:
   a rate, or the empty edge reads as dropout.
 
 **Step 3 — register it** in [registry.yaml](../../lidar_metrics_library/lidar_metrics/registry.yaml)
-under the right geometry key:
+under the right geometry key. Everything lives beneath the top-level `lidar_metrics:` key, one key
+per zone geometry:
 
 ```yaml
+lidar_metrics:
+
+    planar_zone_metrics:
+
     - name: MyMetric              # the class name
       description: What it measures and why.
       executable: my_metric       # the filename, minus .py
@@ -149,8 +163,8 @@ Sometimes a knob shouldn't be a fixed number — it should follow the zones (e.g
 
 ### ✏️ Adding metrics for a brand-new zone type
 
-If you add a new zone geometry (covered later), the metrics side just follows the same pattern — still
-no engine changes:
+If you add a new zone geometry ([§2](#2-adding-a-new-zone-geometry)), the metrics side just follows
+the same pattern — still no engine changes:
 
 1. Make the folders: `zone_metrics/<new_geo>_zones/{spatial,projective}_metrics/`.
 2. Add a `<new_geo>_zone_metrics:` key in `registry.yaml` and list your metrics.
@@ -160,7 +174,80 @@ no engine changes:
 Match the naming (`<Geo>ZoneBounds`, `<geo>_zone_metrics`, `<geo>_zones/`) and the engine wires it all
 up on its own.
 
+## 2. Adding a new zone geometry
 
+Zones are plugins too. One
+[`ZoneTypePlugin`](../../lidar_zones/lidar_zones/zones_api/zone_plugin_api.py) subclass is the
+*single* place that defines a geometry — how to parse it, resolve its bounds, mask clouds against it,
+serialize it, and draw it — and every consumer (the zones node, the filter, the orchestrator,
+polysetup's URDF generation) picks it up through the `ZoneEngine` with no further edits.
+
+[planar.py](../../lidar_zones/lidar_zones/zones_api/zone_plugins/planar.py) is the reference to copy;
+[cylindrical.py](../../lidar_zones/lidar_zones/zones_api/zone_plugins/cylindrical.py) is the second
+example.
+
+**Step 1 — write the plugin** at `lidar_zones/lidar_zones/zones_api/zone_plugins/<executable>.py`.
+Its two data structs are nested *inside* the class, so one class holds the geometry's data and its
+behavior, and you expose them via `zone_type_cls` / `bounds_cls`:
+
+- **`<Geo>ZoneType`** — the fields a zone declares in the environment config (planar: `z_bounds`,
+  `width`, `y_padding`, `z_padding`).
+- **`<Geo>ZoneBounds`** — the resolved bounds after TF is applied; this is what metrics see on
+  `self.profiles.zone_bounds`.
+
+Then fill in the contract. Grouped by when it's called:
+
+| Stage | Methods |
+|---|---|
+| Parse + build (classmethods — no instance yet) | `parse_zone_type`, `build` |
+| Serialize across `/get_profiles` | `to_dict`, `from_dict`, `zone_type_to_dict`, `zone_type_from_dict` |
+| Filtering, per scan | `spatial_mask`, `projective_mask` |
+| Visualization | `expected_fields`, `build_markers` |
+| Generation time (polysetup) | `construct_urdf_link`, `roi_fields` |
+| Optional | `lateral_half_extent` — defaults to `0.0` (a point); override it if your zone has lateral size |
+
+**Step 2 — register it** in
+[zones_types_registry.yaml](../../lidar_zones/lidar_zones/zones_api/zones_types_registry.yaml):
+
+```yaml
+zone_plugins:
+  - ZoneType: my_geometry       # the `type:` string a zone declares in its env config
+    executable: my_geometry     # module name under zone_plugins/
+    Class: MyGeometryZonePlugin # the ZoneTypePlugin subclass in that module
+```
+
+The geometry label lives **only** in the registry, never on the plugin — that's what keeps the
+`ZoneEngine` from needing an edit per geometry.
+
+:::warning Keep module-level imports light
+
+Import only numpy at module scope. Anything heavy or ROS-ish — `urdf_parser_py`,
+`visualization_msgs`, the shared `marker_helpers` — goes *inside* the one method that needs it, so
+pure consumers like the pointcloud filter never drag in the visualization message types.
+:::
+
+**Step 3 — add its metrics**, following the
+"Adding metrics for a brand-new zone type" pattern above: create
+`zone_metrics/<geo>_zones/{spatial,projective}_metrics/` and a `<geo>_zone_metrics:` key in the
+metrics `registry.yaml`. Keep the naming aligned (`<Geo>ZoneBounds` → `<geo>_zone_metrics` →
+`<geo>_zones/`) and the routing happens on its own.
+
+## 3. Adding a database backend or credential provider
+
+Where results get pushed is also pluggable, and credentials and storage are **separate** plugin
+points — so swapping your secret store doesn't mean writing a storage backend:
+
+- **Same database, different secret store** → implement
+  [`AuthInterface`](../../lidar_eval_backends/lidar_eval_backends/authentication_interface.py) under
+  `database_backends/google/auth/` and enable it in that backend's `auth_registry.yaml`.
+- **A different database entirely** → implement
+  [`DatabaseInterface`](../../lidar_eval_backends/lidar_eval_backends/database_interface.py) under
+  `database_backends/` and register it in
+  [`database_registry.yaml`](../../lidar_eval_backends/lidar_eval_backends/database_registry.yaml).
+
+Both registries load the **first enabled** row, so enable exactly one. The full walkthrough — plus
+how to set your own credentials up in the first place — is in
+[Developer Guide § 2 — Authenticating your database](./developer-guide.md).
 
 ## ✏️ Testing your change
 
