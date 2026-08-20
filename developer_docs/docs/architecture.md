@@ -94,12 +94,6 @@ The primary data-path processing node responsible for isolating sensor data. It 
 
 ---
 
-### **`arduino_eth_bridge`**
-
-Provides hardware communication support for external motor and actuator controllers. This package enables integration with firmware-controlled hardware components used for automated sensor positioning and motion control.
-
----
-
 # 📁 Configuration Folders
 
 ## **`environment_configs`**

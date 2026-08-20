@@ -162,6 +162,70 @@ up on its own.
 
 
 
+## ✏️ Testing your change
+
+Every ROS package carries its tests in `<package>/test/test_*.py`. They're plain `pytest` — no ROS
+graph, no bags, no hardware. Fakes stand in for the parts that would need them, so the whole suite
+runs in a couple of seconds.
+
+**Run everything:**
+
+```bash
+colcon test
+colcon test-result --verbose     # the failure detail; `colcon test` only prints a summary
+```
+
+**Run one file while you iterate** — much faster than a full `colcon test`, and the failure lands
+straight in your terminal:
+
+```bash
+source install/setup.bash        # the tests import from the overlay
+python3 -m pytest lidar_zones/test/test_zone_engine.py -q
+```
+
+Adding a metric or a zone plugin? Put its test next to the existing ones — `test_metrics_engine.py`
+and `test_zone_engine.py` are the patterns to copy. Both fake their plugins, so they test routing and
+report shape without depending on any individual metric's math.
+
+### The `extras_require` gotcha
+
+If you create a **new** `ament_python` package, its `setup.py` must declare the test extra:
+
+```python
+extras_require={
+    'test': [
+        'pytest',
+    ],
+},
+```
+
+colcon only picks its pytest runner for packages that declare it. Without it colcon silently falls
+back to the old setuptools/unittest runner, which collects nothing, prints `NO TESTS RAN`, and fails
+the package with exit code 5 — even when the package is full of perfectly good pytest files.
+
+### What CI enforces
+
+[`ros-ci.yml`](https://github.com/polymathrobotics/lidar_eval_framework/blob/main/.github/workflows/ros-ci.yml)
+builds the workspace and runs the suite in two steps:
+
+| Step | Blocking? | What it runs |
+|---|---|---|
+| `colcon test (unit tests)` | **yes** | everything except the style linters |
+| `ament style linters` | no | `test_flake8` / `test_pep257`, reported for visibility |
+
+The linters are deliberately non-blocking: they flag several hundred pre-existing errors in source,
+most of them style preferences this codebase doesn't follow — notably pep257's `D213` ("summary should
+start at the second line"), which every multi-line docstring here violates by using the conventional
+first-line summary. Gating on them would mean permanently red CI. **Your unit tests are the gate**, so
+a red run means something real broke.
+
+That said, don't add *new* lint errors in the files you touch. Check before you push:
+
+```bash
+python3 -m ament_flake8.main path/to/your_file.py
+python3 -m ament_pep257.main path/to/your_file.py
+```
+
 ## Opening a Pull Request (PR)
 1. Isolate your work by creating a feature branch off of `main`: `feat/add-sensor-x` or `fix/matrix-transform`.
 2. Format your commit descriptions using standard **Conventional Commits** formatting keys (e.g., `feat(core): add type-safe transform matrix`).

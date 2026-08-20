@@ -85,6 +85,7 @@ A `Justfile` wraps the CLI so a full run is a handful of recipes:
 | `just launch-bench` | Bring up the pipeline |
 | `just start-run` / `just stop-run` | Start or stop an evaluation |
 | `just enable-bag-recording` / `just disable-bag-recording` | Record fresh bags, or evaluate existing ones |
+| `just enable-angle-detection` / `just disable-angle-detection` | Rotate the Lidar at different panning angles to evaluate the entire FOV |
 
 Configs are named, not pathed — `just setup-ws conference_room hummingbird` resolves each name against the config tree, and refuses to guess: an unknown name lists what is available, an ambiguous one lists the candidates.
 
