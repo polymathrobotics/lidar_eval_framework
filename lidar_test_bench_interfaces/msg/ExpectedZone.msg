@@ -1,7 +1,7 @@
 string name
-string geometry        # "planar" | "cylindrical"
+string geometry        
 
-# basically only fill in the fileds ea
+# Supports any zone plugins
 
 float32 x
 float32 y_min
