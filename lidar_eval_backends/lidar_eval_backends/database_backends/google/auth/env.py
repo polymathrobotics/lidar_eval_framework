@@ -1,4 +1,4 @@
-# Copyright (c) 2025-present Polymath Robotics, Inc.
+# Copyright (c) 2026-present Polymath Robotics, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
 import os
@@ -8,19 +8,8 @@ from lidar_eval_backends.authentication_interface import AuthInterface
 
 
 class Env(AuthInterface):
-    """Load the Google backend's credentials from an `auth.env` file — a plain KEY=VALUE list of
-    the service-account fields plus `root_folder_id`. Non-interactive and dependency-free: the
-    generic (non-Polymath) alternative to the 1Password provider.
-
-    The file's location comes from `env_file` in this provider's auth_registry.yaml row, with
-    `$AUTH_ENV_FILE` as an override. `~` and `$VARS` in the configured value are expanded.
-
-    This provider deliberately does no path derivation of its own. auth.env holds real credentials,
-    so it is gitignored and never installed — meaning there is no package resource to resolve it
-    through (the way the registry YAMLs themselves are resolved), and counting parent directories
-    from this module gives a different answer depending on whether the package is running from
-    source or from `install/`. Declaring the path in the registry keeps that knowledge in
-    configuration instead of in library code.
+    """
+    Authenticate using a personal .env file
     """
 
     def _configured_path(self) -> Path:
