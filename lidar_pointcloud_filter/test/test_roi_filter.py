@@ -108,6 +108,41 @@ def test_empty_zone_is_reported_as_an_unsuccessful_result(profiles):
     assert 'No points in spatial bbox' in spatial.message
 
 
+def test_corrupt_points_are_dropped_before_the_zone_masks(profiles):
+    # A torn scan decodes arbitrary bytes as float32, reaching ~FLT_MAX. Left in, a single
+    # such point overflows dx**2 downstream and turns the run's aggregates into inf/NaN, so
+    # the filter must discard it while keeping the genuine returns in the same scan.
+    cloud = make_cloud([
+        (5.0, 0.0, 0.5, 10.0),          # genuine return, inside the zone
+        (3.4e38, -3.4e38, 3.4e38, 1.0),  # torn: non-physical magnitude
+        (float('inf'), 0.0, 0.5, 1.0),   # torn: non-finite
+        (5.0, 0.5, 0.5, 12.0),          # genuine return, inside the zone
+    ])
+
+    result = ROIFilter().filter(cloud, StubTfBuffer(identity_transform()), profiles, {}, {})
+
+    spatial = result['wall']['spatial_cloud']
+    assert spatial.success
+    assert len(spatial.filtered_xyz) == 2
+    assert np.isfinite(spatial.filtered_xyz).all()
+    assert np.abs(spatial.filtered_xyz).max() <= ROIFilter.MAX_PLAUSIBLE_RANGE_M
+
+
+def test_a_wholly_corrupt_cloud_fails_rather_than_reporting_zero_points(profiles):
+    # Every point torn: better to fail the scan loudly than hand the metrics an empty
+    # cloud, which reads identically to a genuine total dropout.
+    cloud = make_cloud([
+        (3.4e38, 3.4e38, 3.4e38, 1.0),
+        (float('inf'), float('inf'), float('inf'), 1.0),
+    ])
+
+    result = ROIFilter().filter(cloud, StubTfBuffer(identity_transform()), profiles, {}, {})
+
+    spatial = result['wall']['spatial_cloud']
+    assert not spatial.success
+    assert 'corrupt' in spatial.message
+
+
 def test_missing_xyz_fields_fail_every_zone_uniformly(profiles):
     cloud = PointCloud2()
     cloud.fields = [

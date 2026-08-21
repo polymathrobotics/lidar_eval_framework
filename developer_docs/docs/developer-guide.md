@@ -391,9 +391,49 @@ running on your machine), deploy it on **Streamlit Community Cloud**:
 3. **Create the app.** In Streamlit Cloud click **New app**, select your forked repo, pick the branch,
    and set the **main file path** to the app's full path from the repo root —
    `polyview_app/src/app.py`. There is no "working directory" setting, so the path has to be complete.
-4. **Add your secrets.** In the app's **Advanced settings → Secrets**, paste the same contents as your
-   local `.streamlit/secrets.toml` (the `root_folder_id` and the `[google_sheets]` service-account
-   block). Never commit `secrets.toml` to the repo — Streamlit stores these securely instead.
+4. **Add your secrets.** Cloud has no `op` CLI and no `auth.env`, so PolyView falls back to
+   `st.secrets['database_credentials']` — and if that's missing you get
+   `Could not authenticate to the results database` on startup. In the app's **Advanced settings →
+   Secrets** (or **Manage app → Settings → Secrets** after deploying), add a
+   **`[database_credentials]`** table holding your Drive `root_folder_id` plus the service-account
+   JSON fields verbatim — the same set of keys as
+   [auth.env.example](../../lidar_eval_backends/auth.env.example):
+
+   ```toml
+   [database_credentials]
+   root_folder_id = "YOUR_DRIVE_ROOT_FOLDER_ID"
+   type = "service_account"
+   project_id = "your-project-id"
+   private_key_id = "xxxxxxxxxxxxxxxx"
+   private_key = '''
+   -----BEGIN PRIVATE KEY-----
+   MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...
+   ...every line of the key, verbatim...
+   -----END PRIVATE KEY-----
+   '''
+   client_email = "your-sa@your-project.iam.gserviceaccount.com"
+   client_id = "xxxxxxxxxxxxxxxxxxxx"
+   auth_uri = "https://accounts.google.com/o/oauth2/auth"
+   token_uri = "https://oauth2.googleapis.com/token"
+   auth_provider_x509_cert_url = "https://www.googleapis.com/oauth2/v1/certs"
+   client_x509_cert_url = "https://www.googleapis.com/robot/v1/metadata/x509/your-sa%40your-project.iam.gserviceaccount.com"
+   ```
+
+   The table name matters — it must be `database_credentials`. Everything except `root_folder_id` is
+   handed straight to Google's `from_service_account_info()`, so the key names have to match the
+   service-account JSON exactly.
+
+   **Use `'''` for `private_key`, not `"…\n…"`.** Both are valid TOML — a basic `"…"` string does turn
+   `\n` into the real newlines Google needs — but that puts the whole key on one ~1750-character line
+   in a web textarea, where a truncated paste or a stray `\\n` is easy and the failure mode is
+   miserable to read: a `ValueError` from `load_pem_private_key` deep inside `google.auth`, with the
+   message redacted by Streamlit. `'''` is a *literal* multi-line string — no escape processing at all
+   — so the PEM's real line breaks go in verbatim and there are no backslashes to get wrong.
+
+   If you do hit that `ValueError`, the key material is rarely the problem; check what's actually
+   stored. A leftover `MII…` placeholder produces exactly this error, because `…` isn't valid base64.
+
+   Never commit `secrets.toml` to the repo; Streamlit stores these securely instead.
 5. **Deploy.** Streamlit builds the app (installing `requirements.txt`) and gives you a public
    `*.streamlit.app` URL. Share that link — anyone in your organization can open it to view the lidar
    evaluation data, no local setup required.

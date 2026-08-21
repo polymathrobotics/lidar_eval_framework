@@ -30,6 +30,13 @@ class FilterResult:
 class ROIFilter:
     """Decodes a raw PointCloud2 and produces per-zone spatial + projective filtered results."""
 
+    # Coordinates beyond this are not physically plausible on the bench and indicate corrupt
+    # point data rather than a real return. A torn scan whose buffer holds arbitrary bytes
+    # decodes to magnitudes around 3.4e38 (FLT_MAX); left in, a single such point overflows
+    # dx**2 in the range/depth metrics and turns every run-level mean, std and percentile
+    # that averages across scans into inf/NaN.
+    MAX_PLAUSIBLE_RANGE_M: float = 1000.0
+
     def __init__(self) -> None:
         # The engine wraps each ZoneBounds into its plugin to run geometry-specific masks.
         self._engine = ZoneEngine()
@@ -88,6 +95,25 @@ class ROIFilter:
         arr = np.array(raw_points)
         xyz = np.stack([arr['x'], arr['y'], arr['z']], axis=1).astype(np.float64)
         intensities = arr['intensity'].astype(np.float32) if has_intensity else None
+
+        # Drop corrupt / non-physical returns before anything downstream consumes them.
+        # read_points(skip_nans=True) removes NaN but not +/-inf, and it has no opinion on
+        # absurd finite values — so this is the only place that catches a torn scan. Reported
+        # rather than dropped silently: a nonzero count here means the source cloud is damaged,
+        # which is worth seeing in the log instead of inferring later from poisoned metrics.
+        sane = (np.isfinite(xyz).all(axis=1)
+                & (np.abs(xyz) <= self.MAX_PLAUSIBLE_RANGE_M).all(axis=1))
+        n_corrupt = int(xyz.shape[0] - int(sane.sum()))
+        if n_corrupt:
+            print(f'[ROIFilter] WARNING dropped {n_corrupt}/{xyz.shape[0]} corrupt points '
+                  f'(non-finite or |coord| > {self.MAX_PLAUSIBLE_RANGE_M} m)', flush=True)
+            xyz = xyz[sane]
+            if intensities is not None:
+                intensities = intensities[sane]
+            if xyz.shape[0] == 0:
+                return self._preflight_failure_dict(
+                    profiles, 'Cloud is empty after dropping corrupt points'
+                )
 
         # DIAGNOSTIC — count zero / near-zero returns coming from the sensor
         norms = np.linalg.norm(xyz, axis=1)
