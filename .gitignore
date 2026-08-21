@@ -12,7 +12,18 @@ environment_configs/*
 lidar_drivers/*
 !lidar_drivers/.gitkeep
 
-results_locations/
+# Same idea one level deeper: keep results_locations/ and its two output folders,
+# ignore all run output inside them. Each nested level needs its own re-include of
+# the *directory* (`!dir/`) before its contents can be ignored — otherwise git stops
+# descending at the parent and never sees the deeper rules.
+results_locations/*
+!results_locations/metrics_results/
+!results_locations/rosbags/
+results_locations/metrics_results/*
+!results_locations/metrics_results/.gitkeep
+results_locations/rosbags/*
+!results_locations/rosbags/.gitkeep
+
 build/
 log/
 install/

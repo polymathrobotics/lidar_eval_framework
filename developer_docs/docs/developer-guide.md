@@ -146,6 +146,59 @@ ground-truth zone geometry.
 `driver_config_file` is the sensor driver's **own** YAML — the bench edits keys inside it when sweeping
 parameters (see below).
 
+#### Installing the driver first
+
+These three fields only matter when the **automation manager** is driving a live sensor; a replay-only
+run never starts a driver and can ignore them. If you are recording, the driver has to exist and be
+built *before* polysetup can wire it in:
+
+**1. Put the driver source in [`lidar_drivers/`](../../lidar_drivers).** That's where the vendor
+checkouts live — `HesaiLidar_ROS_2.0/`, `Lslidar_ROS2_driver/`, `zadar-sdk/`. The folder's contents are
+gitignored, so your driver stays local to your machine and never lands in the repo.
+
+**2. Build it, and keep it on the overlay of the shell you launch from.** `lidar_drivers/` has its own
+`build/`, `install/` and `log/`, each carrying a `COLCON_IGNORE`, so the drivers are built as a
+**separate workspace** from the bench:
+
+```bash
+cd lidar_drivers && colcon build
+source lidar_drivers/install/setup.bash    # same shell you then launch the bench from
+```
+
+This matters more than it looks: the automation manager starts the sensor by **shelling out**
+`driver_command`, so the package has to be resolvable by `ros2 run` / `ros2 launch` in the environment
+the bench was launched from. Miss the `source` and the driver simply never comes up — you get a run
+with no points rather than an error.
+
+**3. Point the lidar config at the built package and its config file.** `ros2_driver` is the built
+package name; `driver_command` is how to start it; `driver_config_file` is the driver's own YAML:
+
+```yaml
+  ros2_driver:        hesai_ros_driver
+  driver_command:     'ros2 run hesai_ros_driver hesai_ros_driver_node --ros-args
+                       -p config_path:=/lidar_test_bench/lidar_drivers/HesaiLidar_ROS_2.0/config/config.yaml'
+  driver_config_file: '/lidar_test_bench/lidar_drivers/HesaiLidar_ROS_2.0/config/config.yaml'
+```
+
+`driver_config_file` must be the **same file the driver actually reads** — the one named in
+`driver_command`. Parameter sweeps resolve each entry's dotted `path` (e.g.
+`lidar.0.driver.default_frame_frequency`) against this file and rewrite it in place between cases
+([driver_manager.py](../../lidar_automation_manager/lidar_automation_manager/tools/driver_manager.py)).
+If the two paths diverge, the sweep writes to a file nobody loads and every case silently runs at the
+driver's default — the metrics come out near-identical across the sweep with nothing to indicate why.
+
+:::warning The sweep rewrites the vendor's config
+
+Values are written back with `yaml.safe_dump`, which **strips comments and reorders keys** in the
+driver's own YAML. Keep a pristine copy of any vendor config you care about before your first swept
+run, and don't expect the file to survive unchanged.
+:::
+
+**4. Run polysetup.** It copies `ros2_driver`, `driver_command` and `driver_config_file` out of the
+lidar config and into `automation_manager.yaml`
+([configure_new_run.py](../../polysetup/polysetup/configure_new_run.py)), alongside the computed servo
+angles and sweep definitions — so the automation manager never reads the lidar config directly.
+
 ### Sensor specs
 
 Descriptive fields used for reporting and (eventually) geometry-based angle computation:
