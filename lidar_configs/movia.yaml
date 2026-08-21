@@ -1,0 +1,66 @@
+# MOVIA (MicroVision MVIS) LiDAR configuration for the polymath lidar test bench.
+
+lidar:
+  # ── Identity ──────────────────────────────────────────────────────────────
+  frame:               MicroVisionScanTF                # TF frame / URDF link name (child_frame_id from driver default.yaml)
+  folder:              MOVIA                            # Results folder and Notion identifier
+  point_cloud_topic:   /microvision/pointcloud
+
+  # ── Mount pose (lidar_joint in lidar_bench.urdf) ──────────────────────────
+  joint_xyz_m:         [0.0, 0.0, 0.05]    # offset from motor_axis (m)
+  joint_rpy_rad:       [0.0, 0.0, 0.0]     # no rotation
+
+  # ── Bench geometry ────────────────────────────────────────────────────────
+  map_to_motor_height_m:   0.9406   # vertical distance, ground (map) -> motor_axis (m)
+  motor_to_lidar_height_m: 0.127   # vertical distance, motor_axis -> lidar (m)
+
+  # ── Driver ────────────────────────────────────────────────────────────────
+  ros2_driver:         movia
+  # Wrapper sources the movia overlay + sets LD_LIBRARY_PATH for the device plugins,
+  # then execs movia_node (exec keeps PID stable so process-group kill reaches the node).
+  # Pass 'S' as the trailing arg if you swap to a MOVIA S unit.
+  driver_command:      'bash /workspaces/polymath_workspace/mvis-ros-driver_3.0.1/run_for_bench.sh L'
+  driver_config_file:  '/workspaces/polymath_workspace/mvis-ros-driver_3.0.1/movia/config/default.yaml'
+  lidar_gui:           ''                                    # empty disables GUI prompt
+
+  # ── Sweep ─────────────────────────────────────────────────────────────────
+  angles:              [10.0, -7.0]                         # servo angles to sweep (deg)
+  parameter_names:     [existence_measure_filter_value, enable_scan2340, enable_scan2342, enable_generic_scan2500]
+
+
+  horizontal_fov_deg: 120.0
+  vertical_fov_deg: 75.0
+  horizontal_resolution_deg: 0.47
+  vertical_resolution_deg: 0.75
+  cost: 1500.0
+
+
+  # Point existence-measure threshold — drops returns below this value (0.0–1.0).
+  # default=0 keeps all points (wide-open baseline); 0.999 was empirically too aggressive
+  # for this sensor and produced zero-point clouds.
+  existence_measure_filter_value:
+    type:    double
+    default: 0.0
+    values:  [0.0, 0.5, 0.9]
+    path:    movia.ros__parameters.existence_measure_filter_value
+
+  # Enable processing of Scan2340 packets (raw scan type).
+  enable_scan2340:
+    type:    bool
+    default: true
+    values:  [true, false]
+    path:    movia.ros__parameters.enable_scan2340
+
+  # Enable processing of Scan2342 packets (filtered scan type).
+  enable_scan2342:
+    type:    bool
+    default: true
+    values:  [true, false]
+    path:    movia.ros__parameters.enable_scan2342
+
+  # Enable processing of GenericScan2500 packets.
+  enable_generic_scan2500:
+    type:    bool
+    default: true
+    values:  [true, false]
+    path:    movia.ros__parameters.enable_generic_scan2500

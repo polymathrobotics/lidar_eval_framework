@@ -1,0 +1,58 @@
+# goal is to put lidar shit AND everthing related to the lidar driver in this file
+
+# Robin LiDAR configuration for the polymath lidar test bench.
+
+lidar:
+  # ── Identity ──────────────────────────────────────────────────────────────
+  frame:               seyond                          # TF frame / URDF link name
+  folder:              Hummingbird_D1                          # Results folder and Notion identifier
+  point_cloud_topic:   /iv_points
+
+  # ── Mount pose (lidar_joint in lidar_bench.urdf) ──────────────────────────
+  joint_xyz_m:         [0.0, 0.0, 0.05]    # offset from motor_axis (m)
+  joint_rpy_rad:       [0.0, 0.0, 0.0] # roll = 180 deg (mounted upside down)
+
+  # ── Bench geometry ────────────────────────────────────────────────────────
+  map_to_motor_height_m:   0.9406   # vertical distance, ground (map) -> motor_axis (m)
+  motor_to_lidar_height_m: 0.1524   # vertical distance, motor_axis -> lidar (m) (need to change this somehow)
+
+  # ── Driver ────────────────────────────────────────────────────────────────
+  ros2_driver:         seyond
+  driver_command:      'ros2 run seyond seyond_node --ros-args -p config_path:=/workspaces/polymath_workspace/seyond_config.yaml'
+  driver_config_file:  '/workspaces/polymath_workspace/seyond_config.yaml'
+  lidar_gui:           ''                                    # path to GUI executable (e.g. MetaView); empty disables prompt
+
+  # ── Sweep ─────────────────────────────────────────────────────────────────
+  angles:              [10.0, -7.0]                         # servo angles to sweep (deg)
+  parameter_names:     [reflectance_mode, multiple_return, max_range, min_range]
+
+
+  horizontal_fov_deg: 140.0
+  vertical_fov_deg: 100.0
+  horizontal_resolution_deg: 0.55
+  vertical_resolution_deg: 0.52
+  cost: 1250.0
+
+  reflectance_mode:
+    type:    bool
+    default: true
+    values:  [true, false]
+    path:    lidars.0.lidar.reflectance_mode
+
+  multiple_return:
+    type:    int
+    default: 1
+    values:  [1, 2, 3]
+    path:    lidars.0.lidar.multiple_return
+
+  max_range:
+    type:    double
+    default: 2000.0
+    values:  [100.0, 500.0, 2000.0]
+    path:    lidars.0.lidar.max_range
+
+  min_range:
+    type:    double
+    default: 0.4
+    values:  [0.4, 1.0, 2.0, 3.0]
+    path:    lidars.0.lidar.min_range

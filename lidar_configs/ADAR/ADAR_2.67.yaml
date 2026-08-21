@@ -1,0 +1,28 @@
+# Hesai LiDAR (AT128) configuration for the polymath lidar test bench.
+
+lidar:
+  # ── Identity ──────────────────────────────────────────────────────────────
+  frame:               adar_sensor     # TF frame / URDF link name
+  folder:              ADAR_DISTANCE_2.67m           # Results folder and Notion identifier
+  point_cloud_topic:   /adar/pointcloud
+
+  # ── Mount pose (lidar_joint in lidar_bench.urdf) ──────────────────────────
+  joint_xyz_m:         [0.0, 0.0, 0.05]    # offset from motor_axis (m)
+  joint_rpy_rad:       [1.57079632679, 0.0, 1.57079632679] # roll +90, yaw +90: maps ADAR native Z-fwd/X-left/Y-up -> cart X-fwd/Y-left/Z-up
+
+  # ── Bench geometry ────────────────────────────────────────────────────────
+  motor_to_lidar_height_m: 0.1524   # NEED TO CHANGE
+
+  # ── Driver ────────────────────────────────────────────────────────────────
+  ros2_driver:         sonair_adar
+  driver_command:      'ros2 run sonair_adar point_cloud_publisher --ros-args -p device_ip:=<ADAR_IP_ADDRESS>'
+  driver_config_file:  ''
+  lidar_gui:           ''                                    # empty disables GUI prompt (input() needs a TTY which ros2 launch can't provide)
+
+  # NEED TO CHANGE BELOW
+
+  horizontal_fov_deg: 180.0
+  vertical_fov_deg: 180.0
+  horizontal_resolution_deg: 2.0
+  vertical_resolution_deg: 2.0
+  cost: 1000.0

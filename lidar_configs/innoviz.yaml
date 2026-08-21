@@ -1,0 +1,61 @@
+# Innoviz LiDAR configuration for the polymath lidar test bench.
+
+lidar:
+  # ── Identity ──────────────────────────────────────────────────────────────
+  frame:               innoviz                          # TF frame / URDF link name
+  folder:              Innoviz                          # Results folder and Notion identifier
+  point_cloud_topic:   /lidar_streamer_first_reflection
+
+  # ── Mount pose (lidar_joint in lidar_bench.urdf) ──────────────────────────
+  joint_xyz_m:         [0.0, 0.0, 0.05]    # offset from motor_axis (m)
+  joint_rpy_rad:       [0.0, 0.0, 0.0]     # no rotation
+
+  # ── Bench geometry ────────────────────────────────────────────────────────
+  map_to_motor_height_m:   0.9406   # vertical distance, ground (map) -> motor_axis (m)
+  motor_to_lidar_height_m: 0.127   # vertical distance, motor_axis -> lidar (m)
+
+  # ── Driver ────────────────────────────────────────────────────────────────
+  ros2_driver:         innoviz_ros2
+  driver_command:      'ros2 run innoviz_ros2 streamer_publisher --ros-args --params-file /workspaces/polymath_workspace/innoviz_sdk_1.12.1_79c47e/ros/streamer_parameters.yaml'
+  driver_config_file:  '/workspaces/polymath_workspace/innoviz_sdk_1.12.1_79c47e/ros/streamer_parameters.yaml'
+  lidar_gui:           ''                                    # empty disables GUI prompt
+
+  # ── Sweep ─────────────────────────────────────────────────────────────────
+  angles:              [10.0, -7.0]                         # servo angles to sweep (deg)
+  parameter_names:     [min_confidence, pixel_level_processing, filter_invalid_class, cuda_acceleration]
+
+
+  horizontal_fov_deg: 120.0
+  vertical_fov_deg: 43.0
+  horizontal_resolution_deg: 0.05
+  vertical_resolution_deg: 0.05
+  cost: 850.0
+
+
+  # Confidence threshold — drops returns below this value.
+  min_confidence:
+    type:    double
+    default: 0.9
+    values:  [0.5, 0.7, 0.9]
+    path:    streamer_publisher.ros__parameters.min_confidence
+
+  # Per-pixel classification/filtering — slower but cleaner.
+  pixel_level_processing:
+    type:    bool
+    default: false
+    values:  [true, false]
+    path:    streamer_publisher.ros__parameters.pixel_level_processing
+
+  # Drop returns classified as invalid.
+  filter_invalid_class:
+    type:    bool
+    default: true
+    values:  [true, false]
+    path:    streamer_publisher.ros__parameters.filter_invalid_class
+
+  # Use CUDA on the SDK side (no geometric effect; useful to confirm parity).
+  cuda_acceleration:
+    type:    bool
+    default: true
+    values:  [true, false]
+    path:    streamer_publisher.ros__parameters.cuda_acceleration

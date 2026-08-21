@@ -1,0 +1,82 @@
+# RoboSense (E1R / RSE1) LiDAR configuration for the polymath lidar test bench.
+
+lidar:
+  # ── Identity ──────────────────────────────────────────────────────────────
+  frame:               rslidar      # TF frame / URDF link name
+  folder:              E1R          # Results folder and Notion identifier
+  point_cloud_topic:   /rslidar_points
+
+  # ── Mount pose (lidar_joint in lidar_bench.urdf) ──────────────────────────
+  joint_xyz_m:         [0.0, 0.0, 0.05]    # offset from motor_axis (m)
+  joint_rpy_rad:       [0.0, 0.0, 0.0]     # no rotation
+
+  # ── Bench geometry ────────────────────────────────────────────────────────
+  map_to_motor_height_m:   0.9406   # vertical distance, ground (map) -> motor_axis (m)
+  motor_to_lidar_height_m: 0.0889   # vertical distance, motor_axis -> lidar (m)
+
+  # ── Driver ────────────────────────────────────────────────────────────────
+  ros2_driver:         rslidar_sdk
+  driver_command:      'ros2 run rslidar_sdk rslidar_sdk_node'
+  driver_config_file:  '/workspaces/polymath_workspace/src/rslidar_sdk/config/config.yaml'
+  lidar_gui:           ''                                    # empty disables GUI prompt
+
+  # eventually remove the bottom two angles completely
+
+
+  # ── Sweep ─────────────────────────────────────────────────────────────────
+  angles:              [10.0, -7.0]                         # servo angles to sweep (deg)
+  parameter_names:     [min_distance, max_distance, dense_points, start_angle, end_angle]
+
+
+
+  # -- Include parameters specific to lidar
+  horizontal_fov_deg: 120.0
+  vertical_fov_deg: 90.0
+  horizontal_resolution_deg: 0.625
+  vertical_resolution_deg: 0.625
+  cost: 999.0
+
+  # TODO: 1. Use horizontal fov and vertical fov to compute panning and tilting angles
+  #       2. Use the resolutions for both in degrees + geometry to compute distance
+  #       3. maybe attach a link to an image here somewhere
+  #       4. sen the cost, vertical and horizontal fov's, and the image somehow to the front lines
+
+
+  # Minimum point distance — clips returns closer than this.
+  min_distance:
+    type:    double
+    default: 0.2
+    values:  [0.2, 1.0, 5.0]
+    path:    lidar.0.driver.min_distance
+    description: Minimum range threshold in meters. Returns closer than this value are filtered out to prevent self-occlusion from the vehicle body or sensor housing.
+
+  # Maximum point distance — clips returns farther than this.
+  max_distance:
+    type:    double
+    default: 200.0
+    values:  [100.0, 200.0, 500.0]
+    path:    lidar.0.driver.max_distance
+    description: Maximum range threshold in meters. Filters out distant, low-confidence returns to optimize data processing and limit the maximum depth of the point cloud.
+
+  # If true, discard NaN points; if false, keep them as placeholders.
+  dense_points:
+    type:    bool
+    default: false
+    values:  [true, false]
+    path:    lidar.0.driver.dense_points
+    description: When true, filters out invalid or unreturned (NaN) points to produce a smaller, compact point cloud. When false, preserves the fixed array structure by keeping NaNs as placeholders.
+
+  # FOV trimming in degrees (RoboSense uses [start, end] over 0..360).
+  start_angle:
+    type:    int
+    default: 0
+    values:  [0, 30, 60]
+    path:    lidar.0.driver.start_angle
+    description: Starting azimuth angle in degrees for the horizontal Field of View (FOV) clipping window. Defines the beginning of the active scanning sector.
+
+  end_angle:
+    type:    int
+    default: 360
+    values:  [360, 330, 300]
+    path:    lidar.0.driver.end_angle
+    description: Ending azimuth angle in degrees for the horizontal Field of View (FOV) clipping window. Defines the termination point of the active scanning sector.

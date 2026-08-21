@@ -1,0 +1,69 @@
+# Zadar (4D imaging radar) configuration for the polymath lidar test bench.
+# Driver source: lidar_drivers/zadar-sdk/ros2  (packages: zadar_udp_driver [C++],
+# zadar_udp_driver_py [Python], zadar_msgs)
+
+lidar:
+  # ── Identity ──────────────────────────────────────────────────────────────
+  frame:               zadar           # TF frame / URDF link name; matches the driver's
+                                       # frame_id default (declare_parameter frame_id "zadar")
+  folder:              ZADAR           # Results folder and Notion identifier
+  point_cloud_topic:   /points         # driver publishes relative "points"; launched without
+                                       # a namespace below, so it resolves to /points
+
+  # ── Mount pose (lidar_joint in lidar_bench.urdf) ──────────────────────────
+  joint_xyz_m:         [0.0, 0.0, 0.05]    # offset from motor_axis (m)
+  joint_rpy_rad:       [0.0, 0.0, 0.0]     # TODO: confirm the sensor's axis convention.
+                                           # LSLIDAR needs yaw -90deg; robosense needs 0.
+                                           # Verify against a scan before trusting depths.
+
+  # ── Bench geometry ────────────────────────────────────────────────────────
+  map_to_motor_height_m:   0.9406   # vertical distance, ground (map) -> motor_axis (m)
+  motor_to_lidar_height_m: 0.1016   # vertical distance, motor_axis -> lidar (m)
+
+  # ── Driver ────────────────────────────────────────────────────────────────
+  # Run the node directly rather than via driver.launch.py: that launch file re-applies
+  # every parameter as an inline dict AFTER params_file, so it would silently override
+  # whatever the bench writes into the config between sweep cases.
+  ros2_driver:         zadar_udp_driver
+  driver_command:      'ros2 run zadar_udp_driver zadar_udp_driver_node --ros-args --params-file /lidar_test_bench/lidar_drivers/zadar-sdk/ros2/src/zadar_udp_driver_py/config/driver.yaml'
+  driver_config_file:  '/lidar_test_bench/lidar_drivers/zadar-sdk/ros2/src/zadar_udp_driver_py/config/driver.yaml'
+  lidar_gui:           ''                                    # empty disables GUI prompt
+
+  # ── Sweep ─────────────────────────────────────────────────────────────────
+  angles:              [10.0, -7.0]        # servo angles to sweep (deg)
+  parameter_names:     [running_mode]
+
+  # -- Include parameters specific to lidar
+  # zPRIME 3.0 datasheet (Oct 25). Pick ONE antenna variant — FOV and resolution
+  # must come from the same row:
+  #   ZPRM3-77-T1-LR   120 x 24 FOV   0.35 x 0.4  res
+  #   ZPRM3-77-T1-W    120 x 50 FOV   0.35 x 0.9  res
+  #   ZPRM3-77-T1-UW   120 x 90 FOV   0.35 x 1.6  res
+  # MISMATCH BELOW: vertical_fov_deg is the UW row, vertical_resolution_deg is the LR
+  # row. Set vertical_resolution_deg to 1.6 (UW) or vertical_fov_deg to 24.0 (LR).
+  #
+  # Caveat on the resolutions: the datasheet figure is *static angular resolution* —
+  # separability of two targets in the same range-Doppler cell — not a beam-spacing
+  # grid step the way a lidar's resolution is. Closest analogue available, but the
+  # coverage/dropout metrics treat it as a sampling pitch.
+  horizontal_fov_deg: 120.0
+  vertical_fov_deg: 90.0
+  horizontal_resolution_deg: 0.35
+  vertical_resolution_deg: 0.4
+  cost: 3000.0
+
+  # Zadar driver parameter surface (zadar_udp_driver/src, declare_parameter calls).
+  # Everything the driver exposes is networking, publish toggles, or socket buffering —
+  # running_mode is the only parameter that changes what the sensor actually does.
+  # Paths target the /**:ros__parameters block in the driver's config/driver.yaml,
+  # which the bench rewrites in place per sweep case.
+
+  # Sensor operating mode, applied over the HTTP API before streaming starts.
+  # -1 leaves the sensor in whatever mode it is already in and starts nothing.
+  running_mode:
+    type:    int
+    default: 1
+    values:  [1]     # TODO: list the real modes for this unit — GET /device/running_mode
+                     # on the sensor's web API reports which are available.
+    path:    /**.ros__parameters.running_mode
+    description: Sensor running mode started over the HTTP API after the driver configures its output destination. Different modes trade range against resolution and frame rate, so this is the one driver parameter that changes what the sensor actually measures.

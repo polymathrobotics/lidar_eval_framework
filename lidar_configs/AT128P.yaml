@@ -1,0 +1,68 @@
+# Hesai LiDAR (AT128) configuration for the polymath lidar test bench.
+
+lidar:
+  # ── Identity ──────────────────────────────────────────────────────────────
+  frame:               hesai_lidar      # TF frame / URDF link name
+  folder:              AT128            # Results folder and Notion identifier
+  point_cloud_topic:   /lidar_points
+
+  # ── Mount pose (lidar_joint in lidar_bench.urdf) ──────────────────────────
+  joint_xyz_m:         [0.0, 0.0, 0.05]    # offset from motor_axis (m)
+  joint_rpy_rad:       [0.0, 0.0, 0.0] # yaw = -90 deg, sensor X points toward whiteboard
+
+  # ── Bench geometry ────────────────────────────────────────────────────────
+  map_to_motor_height_m:   0.9406   # vertical distance, ground (map) -> motor_axis (m)
+  motor_to_lidar_height_m: 0.1524   # vertical distance, motor_axis -> lidar (m)
+
+  # ── Driver ────────────────────────────────────────────────────────────────
+  ros2_driver:         hesai_ros_driver
+  driver_command:      'ros2 launch hesai_ros_driver start.py'
+  driver_config_file:  '/workspaces/polymath_workspace/src/HesaiLidar_ROS_2.0/config/config.yaml'
+  lidar_gui:           ''                                    # empty disables GUI prompt (input() needs a TTY which ros2 launch can't provide)
+
+  # ── Sweep ─────────────────────────────────────────────────────────────────
+  angles:              [10.0, -7.0]                         # servo angles to sweep (deg)
+  parameter_names:     [distance_correction_flag, echo_mode_filter, frame_start_azimuth, fov_start, fov_end]
+
+
+  horizontal_fov_deg: 120.0
+  vertical_fov_deg: 25.4
+  horizontal_resolution_deg: 0.2
+  vertical_resolution_deg: 0.8
+  cost: 1800.0
+
+  distance_correction_flag:
+    type:    bool
+    default: false
+    values:  [true, false]
+    path:    lidar.0.driver.distance_correction_flag
+
+  # NOTE: echo_mode_filter only has effect if the AT128 is in a dual-return
+  # hardware mode (0x39/0x3b/0x3c/0x3e). Set that once via Hesai's PTC tool
+  # or web GUI before running this sweep; otherwise these values produce
+  # identical results.
+  echo_mode_filter:
+    type:    int
+    default: 0
+    values:  [0, 1, 2]   # 0=all echoes, 1=primary only, 2=secondary only
+    path:    lidar.0.driver.echo_mode_filter
+
+  # AT128/Pandar128-specific: shifts where the frame "starts" in azimuth.
+  frame_start_azimuth:
+    type:    int
+    default: 0
+    values:  [0, 90, 180]
+    path:    lidar.0.driver.frame_start_azimuth
+
+  # Horizontal FOV trimming. AT128 native FOV is ~120°; -1 disables.
+  fov_start:
+    type:    int
+    default: -1
+    values:  [-1, 30, 60]
+    path:    lidar.0.driver.fov_start
+
+  fov_end:
+    type:    int
+    default: -1
+    values:  [-1, 300, 330]
+    path:    lidar.0.driver.fov_end

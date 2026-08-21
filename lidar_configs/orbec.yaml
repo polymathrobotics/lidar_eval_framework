@@ -1,0 +1,78 @@
+# Orbbec LiDAR configuration for the polymath lidar test bench.
+# Driven via OrbbecSDK_ROS2's lidar.launch.py (orbbec_camera package, device_type=lidar).
+# Frame convention: standard ROS (x forward, y left, z up) — confirmed in
+# ob_lidar_node.cpp:720 where PointCloud2.header.frame_id uses the non-optical frame.
+
+lidar:
+  # ── Identity ──────────────────────────────────────────────────────────────
+  # Frame and topic come from camera_name="orbec" passed in driver_command below.
+  # If you change camera_name, update `frame` and `point_cloud_topic` to match.
+  frame:               orbec_lidar_frame         # = <camera_name>_lidar_frame (ob_lidar_node.cpp:122)
+  folder:              Orbbec                    # Results folder + Notion identifier
+  point_cloud_topic:   /orbec/cloud/points       # = /<camera_name>/cloud/points (ob_lidar_node.cpp:401)
+
+  # ── Mount pose (lidar_joint in lidar_bench.urdf) ──────────────────────────
+  joint_xyz_m:         [0.0, 0.0, 0.05]          # offset from motor_axis (m)
+  joint_rpy_rad:       [0.0, 0.0, 3.14159265]    # 180° yaw — Orbbec mounted facing backwards
+
+  # ── Bench geometry ────────────────────────────────────────────────────────
+  map_to_motor_height_m:   0.9406               # vertical distance, ground (map) -> motor_axis (m)
+  motor_to_lidar_height_m: 0.088                # vertical distance, motor_axis -> lidar (m); TODO: measure for your Orbbec mount
+
+  # ── Driver ────────────────────────────────────────────────────────────────
+  # lidar.launch.py loads `config_file_path` as flat YAML and overrides any
+  # same-named launch args. The testbench rewrites that file between sweeps;
+  # create it if it doesn't exist (start empty {} and the launch defaults apply).
+  ros2_driver:         orbbec_camera
+  driver_command:      'ros2 launch orbbec_camera lidar.launch.py camera_name:=orbec publish_n_pkts:=20 vertical_fov:=90.0'
+  driver_config_file:  '/workspaces/polymath_workspace/src/OrbbecSDK_ROS2/orbbec_camera/config/orbec_lidar.yaml'
+  lidar_gui:           ''                        # empty disables GUI prompt
+
+  # ── Sweep ─────────────────────────────────────────────────────────────────
+  angles:              [10.0, -7.0]              # servo angles to sweep (deg)
+  parameter_names:     [min_range, max_range, filter_level, lidar_rate, echo_mode]
+
+
+  horizontal_fov_deg: 270.0
+  vertical_fov_deg: 60.0
+  horizontal_resolution_deg: 0.036
+  vertical_resolution_deg: 1.09
+  cost: 549.0
+
+
+  # Minimum measurable range (meters). Returns closer than this are dropped.
+  min_range:
+    type:    double
+    default: 0.05
+    values:  [0.05, 0.5, 1.0]
+    path:    min_range
+
+  # Maximum measurable range (meters). Returns farther than this are dropped.
+  max_range:
+    type:    double
+    default: 30.0
+    values:  [10.0, 30.0, 50.0]
+    path:    max_range
+
+  # Noise filtering strength. -1 = device default, 0-5 = increasing filter strength.
+  # Worth sweeping to see how filtering changes dropout / precision.
+  filter_level:
+    type:    int
+    default: -1
+    values:  [-1, 0, 3, 5]
+    path:    filter_level
+
+  # Scan / publish rate (Hz). Supported range depends on the specific Orbbec model.
+  lidar_rate:
+    type:    int
+    default: 20
+    values:  [10, 20]
+    path:    lidar_rate
+
+  # Echo mode. Most Orbbec lidars only support "single channel"; multi-echo models
+  # additionally accept "First Echo" / "Last Echo". Adjust `values` to your device.
+  echo_mode:
+    type:    string
+    default: 'single channel'
+    values:  ['single channel']
+    path:    echo_mode

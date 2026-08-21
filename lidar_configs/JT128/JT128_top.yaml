@@ -1,0 +1,52 @@
+# Hesai JT128 LiDAR configuration for the polymath lidar test bench.
+
+lidar:
+  # ── Identity ──────────────────────────────────────────────────────────────
+  frame:               hesai_lidar      # TF frame / URDF link name (ros_frame_id in driver config.yaml)
+  folder:              JT128            # Results folder and Notion identifier
+  point_cloud_topic:   /lidar_points
+
+  # ── Mount pose (lidar_joint in lidar_bench.urdf) ──────────────────────────
+  joint_xyz_m:         [0.0, 0.0, 0.05]    # offset from motor_axis (m)
+  joint_rpy_rad:       [0.0, 0.0, -1.5708] # yaw = -90 deg, sensor X points toward whiteboard
+
+  # ── Bench geometry ────────────────────────────────────────────────────────
+  map_to_motor_height_m:   0.9406   # vertical distance, ground (map) -> motor_axis (m)
+  motor_to_lidar_height_m: 0.09     # vertical distance, motor_axis -> lidar (m)
+
+  # ── Driver ────────────────────────────────────────────────────────────────
+  # hesai_ros_driver_node reads its config from `config_path` (defaults to the
+  # package-share copy). We point it at the workspace source so the bench can
+  # mutate the same file between sweep cases.
+  ros2_driver:         hesai_ros_driver
+  driver_command:      'ros2 run hesai_ros_driver hesai_ros_driver_node --ros-args -p config_path:=/lidar_test_bench/lidar_drivers/HesaiLidar_ROS_2.0/config/config.yaml'
+  driver_config_file:  '/lidar_test_bench/lidar_drivers/HesaiLidar_ROS_2.0/config/config.yaml'
+  lidar_gui:           'prompt'                                    # empty disables GUI prompt
+
+  # ── Sweep ─────────────────────────────────────────────────────────────────
+  # fov_start/fov_end intentionally removed from parameter_names: the Hesai SDK
+  # parses them as ints via yaml-cpp, and any float write from the bench
+  # (TypedBadConversion<int>) bricks the driver. If you want to sweep FOV later,
+  # confirm test_case_handler.py preserves int types end-to-end, then re-add.
+  parameter_names:     [frame_frequency, echo_mode_filter]
+
+  horizontal_fov_deg: 360.0
+  vertical_fov_deg: 95.0
+  horizontal_resolution_deg: 0.4
+  vertical_resolution_deg: 0.74
+  cost: 1500.0
+
+  # Frame / scan rate in Hz. JT128 supports 10 and 20 Hz.
+  frame_frequency:
+    type:    double
+    default: 10.0
+    values:  [10.0, 20.0]
+    path:    lidar.0.driver.default_frame_frequency
+
+  # Echo mode filter (0 = disabled, others = vendor-specific echo selection).
+  # Confirm valid values in the Hesai JT128 user manual before sweeping aggressively.
+  echo_mode_filter:
+    type:    int
+    default: 0
+    values:  [0, 1, 2]
+    path:    lidar.0.driver.echo_mode_filter

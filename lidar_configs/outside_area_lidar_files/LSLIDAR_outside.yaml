@@ -1,0 +1,58 @@
+# LSLIDAR (LeiShen LS-series, LSS3/LSS4) LiDAR configuration for the polymath lidar test bench.
+
+# Add a field that gives distance between motor axis and map
+# fuck the cart frame
+# in configure new run, take the field and put it in lidar zones config
+# in urdf generator construct link between motor axis and map [fuck the cart]
+
+lidar:
+  # ── Identity ──────────────────────────────────────────────────────────────
+  frame:               laser_link      # TF frame / URDF link name
+  folder:              LSLIDAR        # Results folder and Notion identifier
+  point_cloud_topic:   /lslidar_point_cloud
+
+
+
+  # need to change below
+
+  # ── Mount pose (lidar_joint in lidar_bench.urdf) ──────────────────────────
+  joint_xyz_m:         [0.0, 0.0, 0.05]    # offset from motor_axis (m)
+  joint_rpy_rad:       [0.0, 0.0, -1.5708]     # yaw -90deg: sensor (x-right, y-fwd) -> ROS (x-fwd, y-left)
+
+  # ── Bench geometry ────────────────────────────────────────────────────────
+  map_to_motor_height_m:   0.9406   # vertical distance, ground (map) -> motor_axis (m)
+  motor_to_lidar_height_m: 0.1016   # vertical distance, motor_axis -> lidar (m)
+
+  # ── Driver ────────────────────────────────────────────────────────────────
+  ros2_driver:         lslidar_driver
+  driver_command:      'ros2 run lslidar_driver lslidar_driver_node --ros-args --params-file /lidar_test_bench/lidar_drivers/Lslidar_ROS2_driver/lslidar_driver/config/lslidar_ls.yaml'
+  driver_config_file:  '/lidar_test_bench/lidar_drivers/Lslidar_ROS2_driver/lslidar_driver/config/lslidar_ls.yaml'
+  lidar_gui:           ''                                    # empty disables GUI prompt
+
+  # eventually remove the bottom two angles completely
+
+
+  # ── Sweep ─────────────────────────────────────────────────────────────────
+  angles:              []                         # servo angles to sweep (deg)
+  parameter_names:     []
+
+
+
+  # -- Include parameters specific to lidar
+  horizontal_fov_deg: 120.0
+  vertical_fov_deg: 22.5
+  horizontal_resolution_deg: 0.129
+  vertical_resolution_deg: 0.11
+  cost: 999.0
+
+  # TODO: 1. Use horizontal fov and vertical fov to compute panning and tilting angles
+  #       2. Use the resolutions for both in degrees + geometry to compute distance
+  #       3. maybe attach a link to an image here somewhere
+  #       4. sen the cost, vertical and horizontal fov's, and the image somehow to the front lines
+
+
+  # LS driver param names (lslidar_ls_driver.cpp). Paths target the /**:ros__parameters block
+  # in lslidar_config.yaml, which the bench rewrites in place per sweep case.
+
+  # Minimum point distance — clips returns closer than this (meters).
+  # Target is at ~5 m, so these only trim near self-occlusion; none remove the target.

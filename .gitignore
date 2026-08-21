@@ -12,7 +12,6 @@ environment_configs/*
 lidar_drivers/*
 !lidar_drivers/.gitkeep
 
-lidar_configs/
 results_locations/
 build/
 log/
