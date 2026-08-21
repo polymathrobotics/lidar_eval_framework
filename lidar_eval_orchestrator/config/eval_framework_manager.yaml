@@ -1,13 +1,13 @@
 eval_framework_manager_node:
   ros__parameters:
-    input_topic: /lidar_points
+    input_topic: /points
     bag_timeout: 5
     lidar_server_topic: /start_evaluation
-    lidar: JT128
-    test_results_dir: /lidar_test_bench/results_locations/rosbags/Outside_Office_Area
+    lidar: ZADAR
+    test_results_dir: /lidar_test_bench/results_locations/rosbags/ARCADE_AREA
     metrics_results_dir: /lidar_test_bench/results_locations/metrics_results
-    environment: outside_office_area
+    environment: arcade_white_wall
     notion_database_id: 356c0b1ac5fa80fa8b29f29d3e2aa9a1
     notion_token: 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
-    horizontal_resolution_deg: 0.4
-    vertical_resolution_deg: 0.74
+    horizontal_resolution_deg: 0.35
+    vertical_resolution_deg: 0.4

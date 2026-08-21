@@ -2,20 +2,20 @@
 <robot name="lidar_bench" version="1.0">
   <link name="map"/>
   <link name="motor_axis"/>
-  <link name="blue_wall">
+  <link name="white_wall">
     <visual>
       <geometry>
-        <box size="0.0 1.27 1.27"/>
+        <box size="0.0 1.2446 1.3716"/>
       </geometry>
-      <material name="blue_wall_material">
+      <material name="white_wall_material">
         <color rgba="1.0 1.0 1.0 1.0"/>
       </material>
     </visual>
   </link>
-  <joint name="map_to_blue_wall" type="fixed">
-    <origin xyz="3.048 0.0 0.889" rpy="0.0 0.0 0.0"/>
+  <joint name="map_to_white_wall" type="fixed">
+    <origin xyz="4.064 0.0 0.93218" rpy="0.0 0.0 0.0"/>
     <parent link="map"/>
-    <child link="blue_wall"/>
+    <child link="white_wall"/>
   </joint>
   <joint name="map_to_motor" type="continuous">
     <origin xyz="0.0 0.0 0.9406" rpy="0.0 0.0 0.0"/>
@@ -23,10 +23,10 @@
     <parent link="map"/>
     <child link="motor_axis"/>
   </joint>
-  <link name="hesai_lidar"/>
-  <joint name="hesai_lidar_joint" type="fixed">
-    <origin xyz="0.0 0.0 0.09" rpy="0.0 0.0 -1.5708"/>
+  <link name="zadar"/>
+  <joint name="zadar_joint" type="fixed">
+    <origin xyz="0.0 0.0 0.1016" rpy="0.0 0.0 0.0"/>
     <parent link="motor_axis"/>
-    <child link="hesai_lidar"/>
+    <child link="zadar"/>
   </joint>
 </robot>

@@ -2,21 +2,32 @@ lidar_automation_manager:
   ros__parameters:
     angle_detection_enabled: false
     angles:
-    - 141.0
-    - 70.0
+    - 32.0
+    - 16.0
     - 0.0
-    - -70.0
-    - -141.0
-    bag_recorder_directory: /lidar_test_bench/results_locations/rosbags/Outside_Office_Area
-    bag_recording_duration: 10
+    - -16.0
+    - -32.0
+    bag_recorder_directory: /lidar_test_bench/results_locations/rosbags/ARCADE_AREA
+    bag_recording_duration: 20
     bench_initiate_service: ~/lidar_test_bench_initiate
-    driver_command: ros2 run hesai_ros_driver hesai_ros_driver_node --ros-args -p
-      config_path:=/lidar_test_bench/lidar_drivers/HesaiLidar_ROS_2.0/config/config.yaml
-    driver_config_file: /lidar_test_bench/lidar_drivers/HesaiLidar_ROS_2.0/config/config.yaml
-    lidar: JT128
-    lidar_gui: prompt
-    parameter_names: []
-    pointcloud_topic: /lidar_points
-    ros2_driver: hesai_ros_driver
+    driver_command: ros2 run zadar_udp_driver zadar_udp_driver_node --ros-args --params-file
+      /lidar_test_bench/lidar_drivers/zadar-sdk/ros2/src/zadar_udp_driver_py/config/driver.yaml
+    driver_config_file: /lidar_test_bench/lidar_drivers/zadar-sdk/ros2/src/zadar_udp_driver_py/config/driver.yaml
+    lidar: ZADAR
+    lidar_gui: ''
+    parameter_names:
+    - running_mode
+    pointcloud_topic: /points
+    ros2_driver: zadar_udp_driver
     servo_angle_topic: /servo_angle
     start_evaluation_service: /start_evaluation
+    running_mode:
+      type: int
+      default: 1
+      values:
+      - 1
+      path: /**.ros__parameters.running_mode
+      description: Sensor running mode started over the HTTP API after the driver
+        configures its output destination. Different modes trade range against resolution
+        and frame rate, so this is the one driver parameter that changes what the
+        sensor actually measures.

@@ -1,17 +1,17 @@
 metrics_reporting_node:
   ros__parameters:
     metrics_results_dir: /lidar_test_bench/results_locations/metrics_results
-    lidar_frame: hesai_lidar
-    lidar: JT128
-    lidar_cost: 1500.0
-    lidar_horizontal_fov_deg: 360.0
-    lidar_vertical_fov_deg: 95.0
-    bag_directory: /lidar_test_bench/results_locations/rosbags/Outside_Office_Area
+    lidar_frame: zadar
+    lidar: ZADAR
+    lidar_cost: 3000.0
+    lidar_horizontal_fov_deg: 120.0
+    lidar_vertical_fov_deg: 90.0
+    bag_directory: /lidar_test_bench/results_locations/rosbags/ARCADE_AREA
     database_handler: Google
 visualizer_node:
   ros__parameters:
     metrics_results_dir: /workspaces/polymath_workspace/metrics_results
     frame_id: map
     publish_rate_hz: 1.0
-    lidar: JT128
-    environment: outside_office_area
+    lidar: ZADAR
+    environment: arcade_white_wall

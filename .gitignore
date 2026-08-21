@@ -3,10 +3,17 @@ __pycache__/
 *.pyo
 *.pyd
 
-environment_configs/
+# Keep the folder in the repo, ignore everything in it: a fresh clone gets the
+# paths the launch + polysetup flows expect, without the machine-local contents.
+# `dir/*` and not `dir/` on purpose — a trailing-slash directory ignore stops git
+# descending at all, so the negation below would never be reached.
+environment_configs/*
+!environment_configs/.gitkeep
+lidar_drivers/*
+!lidar_drivers/.gitkeep
+
 lidar_configs/
 results_locations/
-lidar_drivers/
 build/
 log/
 install/
