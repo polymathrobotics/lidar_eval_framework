@@ -8,8 +8,6 @@ import subprocess
 from lidar_eval_backends.authentication_interface import AuthInterface
 
 
-# TODO: extract polymath specifc logic elsewhere
-
 class OnePassword(AuthInterface):
     """Fetch the Google backend's credentials from 1Password via the `op` CLI and return them as
     the Google blob: the Drive `root_folder_id` plus the service-account key fields. Interactive —
